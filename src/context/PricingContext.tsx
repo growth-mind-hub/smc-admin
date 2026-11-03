@@ -68,9 +68,9 @@ interface PricingContextType {
 const PricingContext = createContext<PricingContextType | undefined>(undefined);
 
 export function PricingProvider({ children }: { children: React.ReactNode }) {
-  const [rates, setRates] = useState<VehiclePricingRate[]>(initialPricingRates);
-  const [addOns, setAddOns] = useState<ApiAddOn[]>(initialAddOns);
-  const [distanceRules, setDistanceRules] = useState<ApiDistanceRule[]>(initialDistanceRules);
+  const [rates, setRates] = useState<VehiclePricingRate[]>([]);
+  const [addOns, setAddOns] = useState<ApiAddOn[]>([]);
+  const [distanceRules, setDistanceRules] = useState<ApiDistanceRule[]>([]);
   const [activeTab, setActiveTab] = useState<PricingTab>("vehicle_rates");
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -123,6 +123,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load vehicles for pricing rates:", err);
+        setRates(initialPricingRates);
       }
 
       // 2. Fetch add-ons (deduplicated by client)
@@ -133,6 +134,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load add-ons:", err);
+        setAddOns(initialAddOns);
       }
 
       // 3. Fetch distance rules (deduplicated by client)
@@ -143,6 +145,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load distance rules:", err);
+        setDistanceRules(initialDistanceRules);
       }
     } finally {
       setIsLoading(false);

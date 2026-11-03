@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import AdminLayout from "@/Components/Layout/AdminLayout";
 import { usePricing } from "@/context/PricingContext";
-import { VehiclePricingRate, PricingTab } from "@/types/pricing";
+import { VehiclePricingRate } from "@/types/pricing";
 import { Save, Check } from "lucide-react";
+import NumericInput from "@/Components/Common/NumericInput";
 
 export default function PricingPage() {
   const {
@@ -20,6 +21,7 @@ export default function PricingPage() {
     deleteAddOnItem,
     distanceRules,
     updateDistancePricingRule,
+    isLoading,
   } = usePricing();
 
   const [localAddOnPrices, setLocalAddOnPrices] = useState<Record<number, number>>({});
@@ -332,103 +334,113 @@ export default function PricingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-xs">
-                    {rates.map((rate: VehiclePricingRate) => (
-                      <tr
-                        key={rate.id}
-                        className="hover:bg-stone-50/60 transition-colors"
-                      >
-                        {/* Vehicle */}
-                        <td className="px-5 py-4 w-[280px] max-w-[280px]">
-                          <div className="flex flex-col justify-start items-start max-w-[280px]">
-                            <div className="justify-start text-color-text-primary text-xs font-semibold font-['Manrope'] leading-5">
-                              {rate.name}
+                    {isLoading ? (
+                      [...Array(6)].map((_, idx) => (
+                        <tr key={idx} className="animate-pulse">
+                          <td className="px-5 py-4 w-[280px] max-w-[280px]">
+                            <div className="h-4 w-44 bg-stone-200 rounded mb-1.5" />
+                            <div className="h-3 w-28 bg-stone-100 rounded" />
+                          </td>
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <div className="h-3.5 w-24 bg-stone-100 rounded" />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="h-9 w-20 bg-stone-100 rounded-md" />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="h-9 w-20 bg-stone-100 rounded-md" />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="h-9 w-20 bg-stone-100 rounded-md" />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="h-9 w-20 bg-stone-100 rounded-md" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      rates.map((rate: VehiclePricingRate) => (
+                        <tr
+                          key={rate.id}
+                          className="hover:bg-stone-50/60 transition-colors"
+                        >
+                          {/* Vehicle */}
+                          <td className="px-5 py-4 w-[280px] max-w-[280px]">
+                            <div className="flex flex-col justify-start items-start max-w-[280px]">
+                              <div className="justify-start text-color-text-primary text-xs font-semibold font-['Manrope'] leading-5">
+                                {rate.name}
+                              </div>
+                              <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-relaxed break-words">
+                                {rate.model}
+                              </div>
                             </div>
-                            <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-relaxed break-words">
-                              {rate.model}
+                          </td>
+
+                          {/* Capacity */}
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
+                              {rate.capacityText}
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Capacity */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
-                            {rate.capacityText}
-                          </div>
-                        </td>
+                          {/* Base Fare */}
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
+                                $
+                              </span>
+                              <NumericInput
+                                value={rate.baseFare}
+                                onChange={(val) => updateRate(rate.id, "baseFare", val)}
+                                className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                              />
+                            </div>
+                          </td>
 
-                        {/* Base Fare */}
-                        <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
-                              $
-                            </span>
-                            <input
-                              type="number"
-                              value={rate.baseFare}
-                              onChange={(e) =>
-                                updateRate(rate.id, "baseFare", Number(e.target.value))
-                              }
-                              className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
-                            />
-                          </div>
-                        </td>
+                          {/* Meet & Greet */}
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
+                                $
+                              </span>
+                              <NumericInput
+                                value={rate.meetAndGreet}
+                                onChange={(val) => updateRate(rate.id, "meetAndGreet", val)}
+                                className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                              />
+                            </div>
+                          </td>
 
-                        {/* Meet & Greet */}
-                        <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
-                              $
-                            </span>
-                            <input
-                              type="number"
-                              value={rate.meetAndGreet}
-                              onChange={(e) =>
-                                updateRate(
-                                  rate.id,
-                                  "meetAndGreet",
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
-                            />
-                          </div>
-                        </td>
+                          {/* 3-Hour Charter */}
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
+                                $
+                              </span>
+                              <NumericInput
+                                value={rate.charter3h}
+                                onChange={(val) => updateRate(rate.id, "charter3h", val)}
+                                className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                              />
+                            </div>
+                          </td>
 
-                        {/* 3-Hour Charter */}
-                        <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
-                              $
-                            </span>
-                            <input
-                              type="number"
-                              value={rate.charter3h}
-                              onChange={(e) =>
-                                updateRate(rate.id, "charter3h", Number(e.target.value))
-                              }
-                              className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
-                            />
-                          </div>
-                        </td>
-
-                        {/* 8-Hour Charter */}
-                        <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
-                              $
-                            </span>
-                            <input
-                              type="number"
-                              value={rate.charter8h}
-                              onChange={(e) =>
-                                updateRate(rate.id, "charter8h", Number(e.target.value))
-                              }
-                              className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          {/* 8-Hour Charter */}
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
+                                $
+                              </span>
+                              <NumericInput
+                                value={rate.charter8h}
+                                onChange={(val) => updateRate(rate.id, "charter8h", val)}
+                                className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -473,14 +485,11 @@ export default function PricingPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1">
+                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
                             <span className="text-orange-400 font-semibold text-sm">$</span>
-                            <input
-                              type="number"
+                            <NumericInput
                               value={priceValue}
-                              onChange={(e) =>
-                                handleAddOnPriceChange(addon.id, Number(e.target.value))
-                              }
+                              onChange={(val) => handleAddOnPriceChange(addon.id, val)}
                               className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none"
                             />
                           </div>
@@ -563,15 +572,12 @@ export default function PricingPage() {
                           {rule.max_distance_km !== null ? `${rule.max_distance_km} km` : "Infinity"}
                         </td>
                         <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1">
+                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
                             <span className="text-orange-400 font-semibold text-sm">$</span>
-                            <input
-                              type="number"
+                            <NumericInput
                               disabled={rule.is_contact_support}
                               value={surchargeValue}
-                              onChange={(e) =>
-                                handleDistanceSurchargeChange(rule.id, Number(e.target.value))
-                              }
+                              onChange={(val) => handleDistanceSurchargeChange(rule.id, val)}
                               className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none disabled:text-stone-400"
                             />
                           </div>

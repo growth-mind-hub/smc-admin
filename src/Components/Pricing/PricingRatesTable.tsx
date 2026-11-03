@@ -3,6 +3,7 @@
 import React from "react";
 import { usePricing } from "@/context/PricingContext";
 import { VehiclePricingRate } from "@/types/pricing";
+import NumericInput from "@/Components/Common/NumericInput";
 
 export default function PricingRatesTable() {
   const { rates, updateRate } = usePricing();
@@ -44,12 +45,9 @@ export default function PricingRatesTable() {
                 <td className="px-5 py-4">
                   <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                     <span className="text-[#C6A45A] font-semibold">$</span>
-                    <input
-                      type="number"
+                    <NumericInput
                       value={rate.baseFare}
-                      onChange={(e) =>
-                        updateRate(rate.id, "baseFare", Number(e.target.value))
-                      }
+                      onChange={(val) => updateRate(rate.id, "baseFare", val)}
                       className="w-10 text-center font-semibold text-xs text-[#C6A45A] bg-transparent outline-none"
                     />
                   </div>
@@ -59,16 +57,9 @@ export default function PricingRatesTable() {
                 <td className="px-5 py-4">
                   <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                     <span className="text-[#C6A45A] font-semibold">$</span>
-                    <input
-                      type="number"
+                    <NumericInput
                       value={rate.meetAndGreet}
-                      onChange={(e) =>
-                        updateRate(
-                          rate.id,
-                          "meetAndGreet",
-                          Number(e.target.value)
-                        )
-                      }
+                      onChange={(val) => updateRate(rate.id, "meetAndGreet", val)}
                       className="w-10 text-center font-semibold text-xs text-[#C6A45A] bg-transparent outline-none"
                     />
                   </div>
@@ -78,12 +69,9 @@ export default function PricingRatesTable() {
                 <td className="px-5 py-4">
                   <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                     <span className="text-[#C6A45A] font-semibold">$</span>
-                    <input
-                      type="number"
+                    <NumericInput
                       value={rate.charter3h}
-                      onChange={(e) =>
-                        updateRate(rate.id, "charter3h", Number(e.target.value))
-                      }
+                      onChange={(val) => updateRate(rate.id, "charter3h", val)}
                       className="w-12 text-center font-semibold text-xs text-[#C6A45A] bg-transparent outline-none"
                     />
                   </div>
@@ -93,12 +81,9 @@ export default function PricingRatesTable() {
                 <td className="px-5 py-4">
                   <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                     <span className="text-[#C6A45A] font-semibold">$</span>
-                    <input
-                      type="number"
+                    <NumericInput
                       value={rate.charter8h}
-                      onChange={(e) =>
-                        updateRate(rate.id, "charter8h", Number(e.target.value))
-                      }
+                      onChange={(val) => updateRate(rate.id, "charter8h", val)}
                       className="w-12 text-center font-semibold text-xs text-[#C6A45A] bg-transparent outline-none"
                     />
                   </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
 import { X } from "lucide-react";
+import NumericInput from "@/Components/Common/NumericInput";
 
 export default function EditVehicleModal() {
   const {
@@ -390,12 +391,11 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   Max Passengers
                 </div>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
+                <NumericInput
+                  min={1}
+                  max={100}
                   value={paxCapacity}
-                  onChange={(e) => setPaxCapacity(Number(e.target.value))}
+                  onChange={setPaxCapacity}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
@@ -404,12 +404,11 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   Max Luggage
                 </div>
-                <input
-                  type="number"
-                  min="0"
-                  max="20"
+                <NumericInput
+                  min={0}
+                  max={100}
                   value={luggageCapacity}
-                  onChange={(e) => setLuggageCapacity(Number(e.target.value))}
+                  onChange={setLuggageCapacity}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
@@ -428,10 +427,10 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   Base Fare ($)
                 </div>
-                <input
-                  type="number"
+                <NumericInput
+                  min={0}
                   value={baseFare}
-                  onChange={(e) => setBaseFare(Number(e.target.value))}
+                  onChange={setBaseFare}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
@@ -440,10 +439,10 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   Meet & Greet ($)
                 </div>
-                <input
-                  type="number"
+                <NumericInput
+                  min={0}
                   value={meetAndGreet}
-                  onChange={(e) => setMeetAndGreet(Number(e.target.value))}
+                  onChange={setMeetAndGreet}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
@@ -452,10 +451,10 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   3-Hour Charter ($)
                 </div>
-                <input
-                  type="number"
+                <NumericInput
+                  min={0}
                   value={charter3h}
-                  onChange={(e) => setCharter3h(Number(e.target.value))}
+                  onChange={setCharter3h}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
@@ -464,10 +463,10 @@ export default function EditVehicleModal() {
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                   8-Hour Charter ($)
                 </div>
-                <input
-                  type="number"
+                <NumericInput
+                  min={0}
                   value={charter8h}
-                  onChange={(e) => setCharter8h(Number(e.target.value))}
+                  onChange={setCharter8h}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>

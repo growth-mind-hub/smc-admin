@@ -108,7 +108,7 @@ function mapApiToVehicle(v: ApiVehicle, index: number): Vehicle {
 }
 
 export function FleetProvider({ children }: { children: React.ReactNode }) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialFleet);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -158,6 +158,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.warn("Could not fetch vehicles from live API, using local fleet state:", err?.message);
       setError(err?.message || "Failed to load live vehicles");
+      setVehicles(initialFleet);
     } finally {
       setIsLoading(false);
     }

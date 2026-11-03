@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
 import PlacesAutocompleteInput from "@/Components/Common/PlacesAutocompleteInput";
+import NumericInput from "@/Components/Common/NumericInput";
 
 const SERVICES_CATALOG = [
   {
@@ -636,12 +637,11 @@ export default function NewBookingModal() {
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                       Passengers
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="15"
+                    <NumericInput
+                      min={1}
+                      max={100}
                       value={passengers}
-                      onChange={(e) => setPassengers(Number(e.target.value))}
+                      onChange={setPassengers}
                       className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
@@ -649,12 +649,11 @@ export default function NewBookingModal() {
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                       Luggage Bags
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="15"
+                    <NumericInput
+                      min={0}
+                      max={100}
                       value={luggageBags}
-                      onChange={(e) => setLuggageBags(Number(e.target.value))}
+                      onChange={setLuggageBags}
                       className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>

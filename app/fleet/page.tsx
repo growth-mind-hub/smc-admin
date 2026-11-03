@@ -3,13 +3,14 @@
 import React from "react";
 import AdminLayout from "@/Components/Layout/AdminLayout";
 import FleetCard from "@/Components/Fleet/FleetCard";
+import FleetCardSkeleton from "@/Components/Fleet/FleetCardSkeleton";
 import AddVehicleModal from "@/Components/Fleet/AddVehicleModal";
 import EditVehicleModal from "@/Components/Fleet/EditVehicleModal";
 import { useFleet } from "@/context/FleetContext";
 import { Plus } from "lucide-react";
 
 export default function FleetPage() {
-  const { vehicles, activeVehiclesCount, totalVehiclesCount, openAddVehicleModal } =
+  const { vehicles, activeVehiclesCount, totalVehiclesCount, openAddVehicleModal, isLoading } =
     useFleet();
   const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive">("all");
 
@@ -33,9 +34,13 @@ export default function FleetPage() {
               </div>
             </div>
             <div className="pt-0.5 flex flex-col justify-start items-start">
-              <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
-                {activeVehiclesCount} active of {totalVehiclesCount} total vehicles
-              </div>
+              {isLoading ? (
+                <div className="h-4 w-44 bg-stone-200 rounded animate-pulse mt-0.5" />
+              ) : (
+                <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
+                  {activeVehiclesCount} active of {totalVehiclesCount} total vehicles
+                </div>
+              )}
             </div>
           </div>
 
@@ -62,7 +67,7 @@ export default function FleetPage() {
                 : "bg-stone-100 text-stone-600 hover:bg-stone-200"
             }`}
           >
-            All Fleets ({totalVehiclesCount})
+            All Fleets {isLoading ? "" : `(${totalVehiclesCount})`}
           </button>
           <button
             type="button"
@@ -73,7 +78,7 @@ export default function FleetPage() {
                 : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
             }`}
           >
-            Active ({activeVehiclesCount})
+            Active {isLoading ? "" : `(${activeVehiclesCount})`}
           </button>
           <button
             type="button"
@@ -84,12 +89,18 @@ export default function FleetPage() {
                 : "bg-stone-100 text-stone-600 hover:bg-stone-200"
             }`}
           >
-            Inactive / Deactivated ({inactiveCount})
+            Inactive / Deactivated {isLoading ? "" : `(${inactiveCount})`}
           </button>
         </div>
 
         {/* Fleet Grid */}
-        {displayedVehicles.length === 0 ? (
+        {isLoading ? (
+          <div className="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <FleetCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : displayedVehicles.length === 0 ? (
           <div className="w-full bg-white rounded-xl border border-stone-200 p-12 text-center text-xs text-stone-500">
             No vehicles match the selected status filter.
           </div>
