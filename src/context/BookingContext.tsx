@@ -10,7 +10,6 @@ import React, {
   useRef,
 } from "react";
 import { Booking, BookingStatus, BookingChannel } from "@/types/booking";
-import { initialBookings } from "@/data/initialBookings";
 import {
   getAdminBookings,
   createAdminManualBooking,
@@ -192,11 +191,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
         setBookings(mapped);
       }
     } catch (err: any) {
-      console.warn(
-        "Could not load bookings from live API, falling back to local records:",
-        err?.message
-      );
-      setBookings((prev) => (prev.length > 0 ? prev : initialBookings));
+      console.warn("Could not load bookings from live API:", err?.message);
+      // Keep existing state or remain empty so fake mock bookings are never injected
+      setBookings((prev) => prev);
     } finally {
       setIsLoading(false);
     }

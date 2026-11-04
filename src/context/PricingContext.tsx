@@ -123,7 +123,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load vehicles for pricing rates:", err);
-        setRates(initialPricingRates);
+        setRates((prev) => prev);
       }
 
       // 2. Fetch add-ons (deduplicated by client)
@@ -134,7 +134,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load add-ons:", err);
-        setAddOns(initialAddOns);
+        setAddOns((prev) => prev);
       }
 
       // 3. Fetch distance rules (deduplicated by client)
@@ -145,7 +145,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.warn("Could not load distance rules:", err);
-        setDistanceRules(initialDistanceRules);
+        setDistanceRules((prev) => prev);
       }
     } finally {
       setIsLoading(false);

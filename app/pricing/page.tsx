@@ -464,73 +464,104 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
-                  {addOns.map((addon) => {
-                    const priceValue =
-                      localAddOnPrices[addon.id] !== undefined
-                        ? localAddOnPrices[addon.id]
-                        : addon.price;
-                    const isSaving = savingItem === `addon-${addon.id}`;
-
-                    return (
-                      <tr key={addon.id} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="px-5 py-4 font-mono font-bold text-xs text-slate-800">
-                          {addon.code}
-                        </td>
-                        <td className="px-5 py-4 font-semibold text-color-text-primary">
-                          {addon.name}
+                  {isLoading ? (
+                    [...Array(5)].map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="px-5 py-4">
+                          <div className="h-4 w-20 bg-stone-200 rounded" />
                         </td>
                         <td className="px-5 py-4">
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-medium">
-                            {addon.pricing_type}
-                          </span>
+                          <div className="h-4 w-36 bg-stone-200 rounded" />
                         </td>
                         <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm">$</span>
-                            <NumericInput
-                              value={priceValue}
-                              onChange={(val) => handleAddOnPriceChange(addon.id, val)}
-                              className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none"
-                            />
-                          </div>
+                          <div className="h-4 w-20 bg-stone-100 rounded" />
                         </td>
                         <td className="px-5 py-4">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleAddOnStatus(addon.id, addon.status)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
-                              addon.status === "ACTIVE"
-                                ? "bg-green-100 text-green-700 border border-green-200"
-                                : "bg-stone-100 text-stone-500 border border-stone-200"
-                            }`}
-                          >
-                            {addon.status}
-                          </button>
+                          <div className="h-8 w-16 bg-stone-100 rounded-md" />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="h-6 w-16 bg-stone-100 rounded-full" />
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <div className="inline-flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleSaveAddOn(addon.id, addon.status)}
-                              disabled={isSaving}
-                              className="px-3 py-1.5 bg-color-background-brand text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
-                            >
-                              {isSaving ? "Saving..." : "Save"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteAddOn(addon)}
-                              disabled={savingItem === `addon-del-${addon.id}`}
-                              className="px-2.5 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                              title="Permanently Delete Add-On"
-                            >
-                              {savingItem === `addon-del-${addon.id}` ? "..." : "Delete"}
-                            </button>
-                          </div>
+                          <div className="h-7 w-20 bg-stone-200 rounded-lg inline-block" />
                         </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  ) : addOns.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center text-stone-400">
+                        No add-ons found.
+                      </td>
+                    </tr>
+                  ) : (
+                    addOns.map((addon) => {
+                      const priceValue =
+                        localAddOnPrices[addon.id] !== undefined
+                          ? localAddOnPrices[addon.id]
+                          : addon.price;
+                      const isSaving = savingItem === `addon-${addon.id}`;
+
+                      return (
+                        <tr key={addon.id} className="hover:bg-stone-50/60 transition-colors">
+                          <td className="px-5 py-4 font-mono font-bold text-xs text-slate-800">
+                            {addon.code}
+                          </td>
+                          <td className="px-5 py-4 font-semibold text-color-text-primary">
+                            {addon.name}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-medium">
+                              {addon.pricing_type}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm">$</span>
+                              <NumericInput
+                                value={priceValue}
+                                onChange={(val) => handleAddOnPriceChange(addon.id, val)}
+                                className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleAddOnStatus(addon.id, addon.status)}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+                                addon.status === "ACTIVE"
+                                  ? "bg-green-100 text-green-700 border border-green-200"
+                                  : "bg-stone-100 text-stone-500 border border-stone-200"
+                              }`}
+                            >
+                              {addon.status}
+                            </button>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="inline-flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveAddOn(addon.id, addon.status)}
+                                disabled={isSaving}
+                                className="px-3 py-1.5 bg-color-background-brand text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                              >
+                                {isSaving ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAddOn(addon)}
+                                disabled={savingItem === `addon-del-${addon.id}`}
+                                className="px-2.5 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                                title="Permanently Delete Add-On"
+                              >
+                                {savingItem === `addon-del-${addon.id}` ? "..." : "Delete"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -553,61 +584,92 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
-                  {distanceRules.map((rule) => {
-                    const surchargeValue =
-                      localDistanceSurcharges[rule.id] !== undefined
-                        ? localDistanceSurcharges[rule.id]
-                        : rule.surcharge;
-                    const isSaving = savingItem === `dist-${rule.id}`;
-
-                    return (
-                      <tr key={rule.id} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="px-5 py-4 font-bold text-slate-900">
-                          {rule.min_distance_km} km – {rule.max_distance_km ? `${rule.max_distance_km} km` : "Unbounded"}
-                        </td>
-                        <td className="px-5 py-4 text-slate-600">
-                          {rule.min_distance_km} km ({rule.min_inclusive ? "inclusive" : "exclusive"})
-                        </td>
-                        <td className="px-5 py-4 text-slate-600">
-                          {rule.max_distance_km !== null ? `${rule.max_distance_km} km` : "Infinity"}
+                  {isLoading ? (
+                    [...Array(5)].map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="px-5 py-4">
+                          <div className="h-4 w-28 bg-stone-200 rounded" />
                         </td>
                         <td className="px-5 py-4">
-                          <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
-                            <span className="text-orange-400 font-semibold text-sm">$</span>
-                            <NumericInput
-                              disabled={rule.is_contact_support}
-                              value={surchargeValue}
-                              onChange={(val) => handleDistanceSurchargeChange(rule.id, val)}
-                              className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none disabled:text-stone-400"
-                            />
-                          </div>
+                          <div className="h-4 w-20 bg-stone-100 rounded" />
                         </td>
                         <td className="px-5 py-4">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleDistanceRuleSupport(rule.id, rule)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
-                              rule.is_contact_support
-                                ? "bg-amber-100 text-amber-800 border border-amber-300"
-                                : "bg-blue-50 text-blue-700 border border-blue-200"
-                            }`}
-                          >
-                            {rule.is_contact_support ? "Contact Support" : "Standard Quote"}
-                          </button>
+                          <div className="h-4 w-20 bg-stone-100 rounded" />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="h-8 w-16 bg-stone-100 rounded-md" />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="h-6 w-28 bg-stone-100 rounded-full" />
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleSaveDistanceRule(rule.id, rule)}
-                            disabled={isSaving}
-                            className="px-3 py-1.5 bg-color-background-brand text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
-                          >
-                            {isSaving ? "Saving..." : "Save"}
-                          </button>
+                          <div className="h-7 w-16 bg-stone-200 rounded-lg inline-block" />
                         </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  ) : distanceRules.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center text-stone-400">
+                        No distance rules found.
+                      </td>
+                    </tr>
+                  ) : (
+                    distanceRules.map((rule) => {
+                      const surchargeValue =
+                        localDistanceSurcharges[rule.id] !== undefined
+                          ? localDistanceSurcharges[rule.id]
+                          : rule.surcharge;
+                      const isSaving = savingItem === `dist-${rule.id}`;
+
+                      return (
+                        <tr key={rule.id} className="hover:bg-stone-50/60 transition-colors">
+                          <td className="px-5 py-4 font-bold text-slate-900">
+                            {rule.min_distance_km} km – {rule.max_distance_km ? `${rule.max_distance_km} km` : "Unbounded"}
+                          </td>
+                          <td className="px-5 py-4 text-slate-600">
+                            {rule.min_distance_km} km ({rule.min_inclusive ? "inclusive" : "exclusive"})
+                          </td>
+                          <td className="px-5 py-4 text-slate-600">
+                            {rule.max_distance_km !== null ? `${rule.max_distance_km} km` : "Infinity"}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-amber-500">
+                              <span className="text-orange-400 font-semibold text-sm">$</span>
+                              <NumericInput
+                                disabled={rule.is_contact_support}
+                                value={surchargeValue}
+                                onChange={(val) => handleDistanceSurchargeChange(rule.id, val)}
+                                className="w-12 text-center text-orange-400 font-semibold text-sm bg-transparent outline-none disabled:text-stone-400"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleDistanceRuleSupport(rule.id, rule)}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+                                rule.is_contact_support
+                                  ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                  : "bg-blue-50 text-blue-700 border border-blue-200"
+                              }`}
+                            >
+                              {rule.is_contact_support ? "Contact Support" : "Standard Quote"}
+                            </button>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveDistanceRule(rule.id, rule)}
+                              disabled={isSaving}
+                              className="px-3 py-1.5 bg-color-background-brand text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                            >
+                              {isSaving ? "Saving..." : "Save"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

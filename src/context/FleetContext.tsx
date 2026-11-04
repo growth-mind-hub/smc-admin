@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Vehicle, VehicleStatus } from "@/types/fleet";
-import { initialFleet } from "@/data/initialFleet";
 import {
   getVehicles,
   getVehicleById,
@@ -156,9 +155,10 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         setVehicles([...activeMapped, ...inactiveVehicles]);
       }
     } catch (err: any) {
-      console.warn("Could not fetch vehicles from live API, using local fleet state:", err?.message);
+      console.warn("Could not fetch vehicles from live API:", err?.message);
       setError(err?.message || "Failed to load live vehicles");
-      setVehicles(initialFleet);
+      // Keep existing state or empty so fake mock fleet is never injected
+      setVehicles((prev) => prev);
     } finally {
       setIsLoading(false);
     }

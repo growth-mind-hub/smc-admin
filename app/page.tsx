@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import AdminLayout from "@/Components/Layout/AdminLayout";
 import HeroBanner from "@/Components/Dashboard/HeroBanner";
 import RecentBookingsTable from "@/Components/Dashboard/RecentBookingsTable";
@@ -11,8 +11,15 @@ import { useFleet } from "@/context/FleetContext";
 import { Calendar, Clock, Car, Coins } from "lucide-react";
 
 export default function DashboardPage() {
-  const { counts } = useBookings();
-  const { activeVehiclesCount, totalVehiclesCount } = useFleet();
+  const { counts, bookings, isLoading: bookingsLoading } = useBookings();
+  const { activeVehiclesCount, totalVehiclesCount, isLoading: fleetLoading } = useFleet();
+
+  // Compute live revenue dynamically from confirmed and completed trips
+  const totalRevenue = useMemo(() => {
+    return bookings
+      .filter((b) => b.status === "confirmed" || b.status === "completed" || b.status === "in_progress")
+      .reduce((sum, b) => sum + (Number(b.fare) || 0), 0);
+  }, [bookings]);
 
   return (
     <AdminLayout>
@@ -35,16 +42,25 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="self-stretch flex flex-col justify-start items-start">
-              <div className="self-stretch flex flex-col justify-start items-start">
-                <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
-                  {counts.all}
+              {bookingsLoading ? (
+                <div className="w-full flex flex-col gap-1.5 py-1">
+                  <div className="h-7 w-16 bg-stone-200 rounded animate-pulse" />
+                  <div className="h-3.5 w-24 bg-stone-100 rounded animate-pulse" />
                 </div>
-              </div>
-              <div className="w-full pt-0.5 flex flex-col justify-start items-start">
-                <div className="justify-start text-green-600 text-xs font-normal font-['Manrope'] leading-4">
-                  +3 this week
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="self-stretch flex flex-col justify-start items-start">
+                    <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
+                      {counts.all}
+                    </div>
+                  </div>
+                  <div className="w-full pt-0.5 flex flex-col justify-start items-start">
+                    <div className="justify-start text-green-600 text-xs font-normal font-['Manrope'] leading-4">
+                      {counts.confirmed + counts.completed} confirmed & done
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -61,16 +77,25 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="self-stretch flex flex-col justify-start items-start">
-              <div className="self-stretch flex flex-col justify-start items-start">
-                <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
-                  {counts.pending}
+              {bookingsLoading ? (
+                <div className="w-full flex flex-col gap-1.5 py-1">
+                  <div className="h-7 w-12 bg-stone-200 rounded animate-pulse" />
+                  <div className="h-3.5 w-28 bg-stone-100 rounded animate-pulse" />
                 </div>
-              </div>
-              <div className="w-full pt-0.5 flex flex-col justify-start items-start">
-                <div className="justify-start text-amber-600 text-xs font-normal font-['Manrope'] leading-4">
-                  Needs attention
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="self-stretch flex flex-col justify-start items-start">
+                    <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
+                      {counts.pending}
+                    </div>
+                  </div>
+                  <div className="w-full pt-0.5 flex flex-col justify-start items-start">
+                    <div className={`text-xs font-normal font-['Manrope'] leading-4 ${counts.pending > 0 ? "text-amber-600" : "text-stone-400"}`}>
+                      {counts.pending > 0 ? "Needs attention" : "All reviewed"}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -87,25 +112,34 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="self-stretch flex flex-col justify-start items-start">
-              <div className="self-stretch flex flex-col justify-start items-start">
-                <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
-                  {activeVehiclesCount || 6}
+              {fleetLoading ? (
+                <div className="w-full flex flex-col gap-1.5 py-1">
+                  <div className="h-7 w-12 bg-stone-200 rounded animate-pulse" />
+                  <div className="h-3.5 w-24 bg-stone-100 rounded animate-pulse" />
                 </div>
-              </div>
-              <div className="w-full pt-0.5 flex flex-col justify-start items-start">
-                <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                  {totalVehiclesCount || 6} total fleet
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="self-stretch flex flex-col justify-start items-start">
+                    <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
+                      {activeVehiclesCount}
+                    </div>
+                  </div>
+                  <div className="w-full pt-0.5 flex flex-col justify-start items-start">
+                    <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
+                      {totalVehiclesCount} total fleet
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Revenue (Oct) */}
+          {/* Revenue */}
           <div className="p-5 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start gap-3">
             <div className="self-stretch inline-flex justify-between items-center">
               <div className="inline-flex flex-col justify-start items-start">
                 <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
-                  Revenue (Oct)
+                  Total Revenue
                 </div>
               </div>
               <div className="size-9 bg-amber-50 rounded-lg flex justify-center items-center">
@@ -113,16 +147,25 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="self-stretch flex flex-col justify-start items-start">
-              <div className="self-stretch flex flex-col justify-start items-start">
-                <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
-                  $630
+              {bookingsLoading ? (
+                <div className="w-full flex flex-col gap-1.5 py-1">
+                  <div className="h-7 w-20 bg-stone-200 rounded animate-pulse" />
+                  <div className="h-3.5 w-28 bg-stone-100 rounded animate-pulse" />
                 </div>
-              </div>
-              <div className="w-full pt-0.5 flex flex-col justify-start items-start">
-                <div className="justify-start text-green-600 text-xs font-normal font-['Manrope'] leading-4">
-                  All confirmed trips
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="self-stretch flex flex-col justify-start items-start">
+                    <div className="justify-start text-color-text-primary text-2xl font-bold font-['Manrope'] leading-10">
+                      ${totalRevenue.toLocaleString()} SGD
+                    </div>
+                  </div>
+                  <div className="w-full pt-0.5 flex flex-col justify-start items-start">
+                    <div className="justify-start text-green-600 text-xs font-normal font-['Manrope'] leading-4">
+                      From active & completed trips
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
