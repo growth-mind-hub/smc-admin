@@ -8,7 +8,7 @@ import { Booking } from "@/types/booking";
 
 export default function RecentBookingsTable() {
   const router = useRouter();
-  const { bookings, openBookingDetails } = useBookings();
+  const { bookings, openBookingDetails, isLoading } = useBookings();
 
   // In Screenshot 2, the Recent Bookings sequence is:
   // Sarah Lim, Mei Lin Wong, David Ng, Aditya Kumar, Chen Wei, Raj Patel
@@ -92,7 +92,31 @@ export default function RecentBookingsTable() {
 
       {/* Rows */}
       <div className="w-full flex flex-col justify-start items-start divide-y divide-gray-100">
-        {recentList.map((booking) => {
+        {isLoading ? (
+          [...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="w-full px-5 py-4 flex justify-between items-center gap-4 animate-pulse"
+            >
+              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                <div className="size-9 bg-stone-200 rounded-full flex-shrink-0" />
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="h-4 w-32 bg-stone-200 rounded" />
+                  <div className="h-3 w-48 bg-stone-100 rounded" />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-6 w-16 bg-stone-100 rounded-md" />
+                <div className="h-4 w-12 bg-stone-200 rounded" />
+              </div>
+            </div>
+          ))
+        ) : recentList.length === 0 ? (
+          <div className="w-full p-8 text-center text-xs text-stone-500 font-['Manrope']">
+            No bookings recorded yet.
+          </div>
+        ) : (
+          recentList.map((booking) => {
           const badge = getStatusBadge(booking.status);
 
           return (
@@ -155,7 +179,7 @@ export default function RecentBookingsTable() {
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
     </div>
   );

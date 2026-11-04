@@ -10,7 +10,7 @@ import { useBookings } from "@/context/BookingContext";
 import { Plus } from "lucide-react";
 
 export default function BookingsPage() {
-  const { counts, openNewBookingModal } = useBookings();
+  const { counts, openNewBookingModal, isLoading } = useBookings();
 
   return (
     <AdminLayout>
@@ -24,9 +24,13 @@ export default function BookingsPage() {
               </h1>
             </div>
             <div className="pt-0.5 flex flex-col justify-start items-start">
-              <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
-                {counts.all} total bookings
-              </div>
+              {isLoading ? (
+                <div className="h-4 w-28 bg-stone-200 rounded animate-pulse mt-0.5" />
+              ) : (
+                <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
+                  {counts.all} total bookings
+                </div>
+              )}
             </div>
           </div>
 

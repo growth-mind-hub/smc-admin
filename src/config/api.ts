@@ -54,8 +54,13 @@ export const API_CONFIG = {
     ADMIN_UPDATE_ADDON: (id: number | string) => `/api/add-ons/${id}`,
     ADMIN_DELETE_ADDON: (id: number | string) => `/api/v1/add-ons/${id}`,
 
-    // Admin Booking Management (from handoff)
+    // Admin Booking Management
+    ADMIN_BOOKINGS: "/api/v1/bookings",
     ADMIN_CREATE_BOOKING: "/api/v1/bookings",
+    ADMIN_BOOKING_DETAIL: (idOrBookingNumber: string) =>
+      `/api/v1/bookings/${idOrBookingNumber}`,
+    ADMIN_UPDATE_BOOKING: (idOrBookingNumber: string) =>
+      `/api/v1/bookings/${idOrBookingNumber}`,
     ADMIN_DELETE_BOOKING: (idOrBookingNumber: string) =>
       `/api/v1/bookings/${idOrBookingNumber}`,
 

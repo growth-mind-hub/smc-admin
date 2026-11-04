@@ -36,6 +36,9 @@ import {
   ApiVehicleType,
   AdminManualBookingPayload,
   AdminManualBookingResponse,
+  BookingsListResponse,
+  AdminUpdateBookingPayload,
+  ApiBackendBooking,
 } from "@/types/api";
 
 // ==========================================
@@ -163,6 +166,21 @@ export async function checkoutBooking(
 }
 
 /**
+ * List all bookings from backend
+ * GET /api/v1/bookings
+ */
+export async function getAdminBookings(): Promise<BookingsListResponse> {
+  return apiRequest<BookingsListResponse>(
+    API_CONFIG.ENDPOINTS.ADMIN_BOOKINGS,
+    {
+      method: "GET",
+      requiresAuth: true,
+      forceRefresh: true,
+    }
+  );
+}
+
+/**
  * Create a manual booking from admin
  * POST /api/v1/bookings
  */
@@ -177,6 +195,24 @@ export async function createAdminManualBooking(
       body: JSON.stringify(payload),
       requiresAuth: true,
       idempotencyKey,
+    }
+  );
+}
+
+/**
+ * Update booking status or driver assignment
+ * PATCH /api/v1/bookings/:idOrBookingNumber
+ */
+export async function updateAdminBooking(
+  idOrBookingNumber: string,
+  payload: AdminUpdateBookingPayload
+): Promise<{ booking: ApiBackendBooking }> {
+  return apiRequest<{ booking: ApiBackendBooking }>(
+    API_CONFIG.ENDPOINTS.ADMIN_UPDATE_BOOKING(idOrBookingNumber),
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      requiresAuth: true,
     }
   );
 }

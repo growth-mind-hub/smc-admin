@@ -194,11 +194,17 @@ export default function NewBookingModal() {
       quantity: qty,
     }));
 
+    // Normalize phone number to start with + and strip spaces/symbols as required by backend contract
+    const digitsOnly = phone.replace(/[^0-9]/g, "");
+    const formattedPhone = phone.trim().startsWith("+")
+      ? `+${digitsOnly}`
+      : `+65${digitsOnly}`;
+
     const payload: AdminManualBookingPayload = {
       customer: {
         name: customerName.trim(),
         email: email.trim() || "customer@example.com",
-        phone: phone.trim() || "+65 9123 4567",
+        phone: formattedPhone.length >= 8 ? formattedPhone : "+6591234567",
       },
       vehicle_id: vehicleApiId,
       service_id: currentService.id,
@@ -206,7 +212,11 @@ export default function NewBookingModal() {
       drop: { address: dropoffLocation.trim() },
       add_ons: addOnsPayload,
       driver_name: driverName.trim() || undefined,
-      driver_phone: driverPhone.trim() || undefined,
+      driver_phone: driverPhone.trim()
+        ? driverPhone.trim().startsWith("+")
+          ? driverPhone.trim()
+          : `+65${driverPhone.replace(/[^0-9]/g, "")}`
+        : undefined,
       hours: currentService.isHourly ? Number(hours) : undefined,
     };
 
@@ -228,39 +238,9 @@ export default function NewBookingModal() {
           driver_name: res.booking.driver_name,
         });
       } else {
-        // Fallback local booking creation if live API gave a non-blocking error
-        addBooking({
-          customerName: customerName.trim(),
-          phone: phone.trim(),
-          email: email.trim() || "customer@example.com",
-          channel,
-          serviceType: "airport_transfer",
-          vehicleType: (currentVehicle?.category || "7_seater") as VehicleCategory,
-          vehicleName: currentVehicle?.name || "Maxi Cab",
-          pickupLocation,
-          dropoffLocation,
-          pickupDate,
-          pickupTime,
-          passengers: Number(passengers),
-          luggageBags: Number(luggageBags),
-          fare: estimatedFare,
-          status: "confirmed" as BookingStatus,
-          driverAssigned: driverName
-            ? {
-                name: driverName,
-                phone: driverPhone || "",
-                vehiclePlate: currentVehicle?.plateNumber || "SMC-001",
-              }
-            : undefined,
-        });
-
-        if (res.error) {
-          setSubmitError(
-            `Notice: ${res.error}. Booking was added to local administration records.`
-          );
-        } else {
-          handleResetAndClose();
-        }
+        setSubmitError(
+          res.error || "Could not save booking to the backend database."
+        );
       }
     } catch (err: any) {
       setSubmitError(err?.message || "Failed to create manual booking.");

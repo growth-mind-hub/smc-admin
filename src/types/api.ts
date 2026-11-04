@@ -268,6 +268,46 @@ export interface AdminManualBookingResponse {
   booking: AdminManualBookingResult;
 }
 
+export interface ApiBackendBooking {
+  id: string;
+  booking_number: string;
+  idempotency_key?: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  vehicle_id: number;
+  service_id: number;
+  catalog_id?: number;
+  pickup_address: string;
+  drop_address: string;
+  distance_meters?: number;
+  hours?: number | null;
+  vehicle_amount_minor?: string;
+  distance_amount_minor?: string;
+  add_on_amount_minor?: string;
+  total_amount_minor?: string;
+  currency?: string;
+  quote_snapshot?: any;
+  payment_method?: string;
+  status?: string;
+  booking_status?: string;
+  driver_name?: string | null;
+  driver_phone?: string | null;
+  created_at: string;
+  updated_at: string;
+  paid_at?: string | null;
+}
+
+export interface BookingsListResponse {
+  bookings: ApiBackendBooking[];
+}
+
+export interface AdminUpdateBookingPayload {
+  booking_status?: string;
+  driver_name?: string;
+  driver_phone?: string;
+}
+
 // ==========================================
 // 5. Admin Management Payloads
 // ==========================================

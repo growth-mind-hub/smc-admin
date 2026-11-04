@@ -7,7 +7,7 @@ import { Globe, PhoneCall, Mail } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
 
 export default function BookingsTable() {
-  const { filteredBookings, activeBookingId, openBookingDetails } = useBookings();
+  const { filteredBookings, activeBookingId, openBookingDetails, isLoading } = useBookings();
 
   const getSourceBadge = (channel: Booking["channel"]) => {
     switch (channel) {
@@ -69,6 +69,59 @@ export default function BookingsTable() {
         };
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex flex-col justify-start items-start overflow-hidden font-['Manrope']">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[760px]">
+            <thead>
+              <tr className="bg-stone-100 border-b border-color-border-subtle text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase tracking-wide">
+                <th className="px-4 py-3">Ref / Customer</th>
+                <th className="px-4 py-3">Contact</th>
+                <th className="px-4 py-3">Route</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Source</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Fare</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 text-xs">
+              {[...Array(6)].map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-4 py-3">
+                    <div className="h-4 w-28 bg-stone-200 rounded mb-1" />
+                    <div className="h-3 w-20 bg-stone-100 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-3.5 w-24 bg-stone-100 rounded mb-1" />
+                    <div className="h-3 w-32 bg-stone-100 rounded" />
+                  </td>
+                  <td className="px-4 py-3 max-w-[200px]">
+                    <div className="h-3.5 w-36 bg-stone-100 rounded mb-1" />
+                    <div className="h-3 w-32 bg-stone-100 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-3.5 w-20 bg-stone-100 rounded mb-1" />
+                    <div className="h-3 w-12 bg-stone-100 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-6 w-20 bg-stone-100 rounded-md" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="h-6 w-16 bg-stone-100 rounded-md" />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="h-4 w-12 bg-stone-200 rounded ml-auto" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   if (filteredBookings.length === 0) {
     return (
