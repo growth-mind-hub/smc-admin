@@ -174,6 +174,8 @@ export default function AddVehicleModal() {
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
+        meetAndGreet: Number(meetAndGreet),
+        charter8h: Number(charter8h),
         hourlyRate: Math.round(Number(charter8h) / 8),
         driverName: driverName.trim() || "Unassigned",
         driverPhone: driverPhone.trim() || "+65 9000 0000",

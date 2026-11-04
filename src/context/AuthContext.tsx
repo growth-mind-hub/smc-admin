@@ -32,15 +32,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // If we have a token but no user object, we can construct a placeholder user
+    // If we have a token but no user object, restore from localStorage or construct placeholder
     const token = Cookies.get("accessToken");
     if (token && !user) {
-      setUser({
-        name: "Admin",
-        email: "admin@singaporemaxicabs.com.sg",
-        role: "admin",
-        initials: "AD",
-      });
+      let restoredUser: User | null = null;
+      try {
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("smc_user");
+          if (stored) restoredUser = JSON.parse(stored);
+        }
+      } catch {}
+
+      setUser(
+        restoredUser || {
+          name: "Admin",
+          email: "admin@singaporemaxicabs.com.sg",
+          role: "admin",
+          initials: "AD",
+        }
+      );
     }
   }, []);
 
@@ -91,6 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: (data.user?.role as any) || "admin",
             initials: (data.user?.username || username).substring(0, 2).toUpperCase(),
           };
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("smc_user", JSON.stringify(loggedUser));
+            } catch {}
+          }
           setUser(loggedUser);
           router.push("/");
           return true;
@@ -108,6 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     Cookies.remove("accessToken");
     Cookies.remove("refreshToken");
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("smc_user");
+      } catch {}
+    }
     setUser(null);
     router.push("/login");
   };

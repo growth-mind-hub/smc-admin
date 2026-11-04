@@ -83,7 +83,7 @@ function mapApiToVehicle(v: ApiVehicle, index: number): Vehicle {
     apiId: v.id,
     fleetNumber: `SMC-${String(index + 1).padStart(3, "0")}`,
     name: v.name,
-    model: v.vehicleType || "Maxi Cab",
+    model: v.description || v.vehicleType || "Maxi Cab",
     description: v.description || "",
     category: inferCategory(v.name, v.passengerCapacity),
     plateNumber: driver.plate,
@@ -263,14 +263,21 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
             amount: updates.baseRate,
             currency: "SGD",
           });
+          const arrivalRate = (updates as any).meetAndGreet !== undefined
+            ? (updates as any).meetAndGreet
+            : updates.baseRate + 10;
           await setVehicleServiceRate(numId, "arrival", {
-            amount: updates.baseRate + 10,
+            amount: arrivalRate,
             currency: "SGD",
           });
         }
-        if (updates.hourlyRate !== undefined) {
+        if (updates.hourlyRate !== undefined || (updates as any).charter8h !== undefined) {
+          const pkg8h = (updates as any).charter8h !== undefined
+            ? (updates as any).charter8h
+            : (updates.hourlyRate ? updates.hourlyRate * 8 : undefined);
           await setVehicleServiceRate(numId, "hourly", {
-            amount: updates.hourlyRate,
+            amount: updates.hourlyRate || Math.round((pkg8h || 480) / 8),
+            eightHourAmount: pkg8h,
             currency: "SGD",
             minimumHours: 3,
           });

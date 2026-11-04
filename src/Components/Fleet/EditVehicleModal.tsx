@@ -161,6 +161,8 @@ export default function EditVehicleModal() {
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
+        meetAndGreet: Number(meetAndGreet),
+        charter8h: Number(charter8h),
         hourlyRate: Math.round(Number(charter8h) / 8),
         status: (isActive ? "active" : "inactive") as VehicleStatus,
       });

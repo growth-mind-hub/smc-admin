@@ -240,6 +240,8 @@ export async function apiRequest<T>(
             ...options,
             _isRetry: true,
           });
+        } else if (isClient && !window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login";
         }
       }
 

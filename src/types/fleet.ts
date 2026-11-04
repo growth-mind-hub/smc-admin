@@ -14,7 +14,9 @@ export interface Vehicle {
   paxCapacity: number;
   luggageCapacity: number;
   baseRate: number;
+  meetAndGreet?: number;
   hourlyRate: number;
+  charter8h?: number;
   status: VehicleStatus;
   driverName: string;
   driverPhone: string;

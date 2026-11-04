@@ -2,8 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HeroBanner() {
+  const { user } = useAuth();
   return (
     <div className="self-stretch p-8 bg-color-background-brand rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
       <div className="max-w-md inline-flex flex-col justify-start items-start">
@@ -13,8 +15,8 @@ export default function HeroBanner() {
           </div>
         </div>
         <div className="self-stretch pt-1 flex flex-col justify-start items-start">
-          <div className="justify-start text-color-text-inverse text-2xl sm:text-3xl font-bold font-['Manrope'] leading-10">
-            Welcome back, Owner
+          <div className="justify-start text-color-text-inverse text-2xl sm:text-3xl font-bold font-['Manrope'] leading-10 capitalize">
+            Welcome back, {user?.name || "Owner"}
           </div>
         </div>
         <div className="self-stretch pt-1 flex flex-col justify-start items-start">

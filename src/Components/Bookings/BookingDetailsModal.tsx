@@ -32,8 +32,13 @@ export default function BookingDetailsModal() {
     closeBookingDetails,
     updateBookingStatus,
     deleteBooking,
+    assignDriver,
   } = useBookings();
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isEditingDriver, setIsEditingDriver] = React.useState(false);
+  const [inputDriverName, setInputDriverName] = React.useState("");
+  const [inputDriverPhone, setInputDriverPhone] = React.useState("");
+  const [isSavingDriver, setIsSavingDriver] = React.useState(false);
 
   // Close on Escape key
   const handleKeyDown = useCallback(
@@ -199,25 +204,50 @@ export default function BookingDetailsModal() {
     window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
   };
 
+  const hasDriverAssigned = Boolean(
+    activeBooking.assignedDriver?.name || activeBooking.driverAssigned?.name
+  );
   const driverName =
     activeBooking.assignedDriver?.name ||
     activeBooking.driverAssigned?.name ||
-    "Ahmad Rizal";
+    "Unassigned";
   const driverPhone =
     activeBooking.assignedDriver?.phone ||
     activeBooking.driverAssigned?.phone ||
-    "+65 9101 1234";
+    "";
   const vehiclePlate =
     activeBooking.assignedDriver?.vehiclePlate ||
     activeBooking.driverAssigned?.vehiclePlate ||
-    "SMC-001";
+    (activeBooking.vehicleName ? activeBooking.vehicleName.slice(0, 7).toUpperCase() : "SMC");
 
-  const driverInitials = driverName
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const driverInitials = hasDriverAssigned
+    ? driverName
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "NA";
+
+  const handleSaveDriver = async () => {
+    if (!inputDriverName.trim()) {
+      alert("Please enter driver name");
+      return;
+    }
+    try {
+      setIsSavingDriver(true);
+      await assignDriver(activeBooking.id, {
+        name: inputDriverName.trim(),
+        phone: inputDriverPhone.trim() || "+65 9000 0000",
+        vehiclePlate: vehiclePlate || "SMC-001",
+      });
+      setIsEditingDriver(false);
+    } catch (err: any) {
+      alert(err?.message || "Failed to assign driver");
+    } finally {
+      setIsSavingDriver(false);
+    }
+  };
 
   const statusOptions: {
     id: BookingStatus;
@@ -463,7 +493,7 @@ export default function BookingDetailsModal() {
                     <span>Passengers</span>
                   </div>
                   <div className="text-xs font-semibold text-color-text-primary mt-1">
-                    {activeBooking.passengers || 4} pax
+                    {activeBooking.passengers || 1} pax
                   </div>
                 </div>
 
@@ -473,7 +503,7 @@ export default function BookingDetailsModal() {
                     <span>Luggage</span>
                   </div>
                   <div className="text-xs font-semibold text-color-text-primary mt-1">
-                    {activeBooking.luggageBags || activeBooking.luggage || 4} bags
+                    {activeBooking.luggageBags ?? activeBooking.luggage ?? 0} bags
                   </div>
                 </div>
 
@@ -530,43 +560,113 @@ export default function BookingDetailsModal() {
                       {vehiclePlate}
                     </span>
                     <h3 className="text-sm font-bold mt-1 text-white">
-                      {activeBooking.vehicleName || "6 Seater Maxi Cab"}
+                      {activeBooking.vehicleName || "Maxi Cab"}
                     </h3>
                     <p className="text-xs text-white/70">
-                      Toyota Vellfire / Alphard
+                      {formatService(activeBooking.serviceType)}
                     </p>
                   </div>
                   <Car className="size-8 text-amber-400/70" />
                 </div>
 
                 {/* Assigned Driver Row */}
-                <div className="p-3 bg-color-background-selected border-t border-slate-100 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="size-9 bg-color-background-brand text-white rounded-full flex justify-center items-center text-xs font-bold flex-shrink-0">
-                      {driverInitials}
+                <div className="p-3 bg-color-background-selected border-t border-slate-100 flex flex-col gap-2.5">
+                  {isEditingDriver ? (
+                    <div className="flex flex-col gap-2 p-1">
+                      <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wide">
+                        {hasDriverAssigned ? "Update Driver Assignment" : "Assign Driver to Trip"}
+                      </div>
+                      <input
+                        type="text"
+                        value={inputDriverName}
+                        onChange={(e) => setInputDriverName(e.target.value)}
+                        placeholder="Driver Full Name (e.g. Ahmad Rizal)"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      />
+                      <input
+                        type="text"
+                        value={inputDriverPhone}
+                        onChange={(e) => setInputDriverPhone(e.target.value)}
+                        placeholder="Driver Phone (e.g. +65 9101 1234)"
+                        className="w-full h-8 px-2.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      />
+                      <div className="flex justify-end items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingDriver(false)}
+                          disabled={isSavingDriver}
+                          className="px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-200 rounded-md transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveDriver}
+                          disabled={isSavingDriver}
+                          className="px-3 py-1 bg-color-background-brand text-white rounded-md text-xs font-semibold hover:opacity-90 transition-opacity"
+                        >
+                          {isSavingDriver ? "Saving..." : "Save Driver"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[10px] uppercase font-semibold text-color-input-placeholder">
-                        Assigned Driver
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`size-9 rounded-full flex justify-center items-center text-xs font-bold flex-shrink-0 ${
+                            hasDriverAssigned
+                              ? "bg-color-background-brand text-white"
+                              : "bg-stone-200 text-stone-500"
+                          }`}
+                        >
+                          {driverInitials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase font-semibold text-color-input-placeholder">
+                            Assigned Driver
+                          </div>
+                          <div
+                            className={`text-xs font-bold truncate ${
+                              hasDriverAssigned ? "text-color-text-primary" : "text-stone-400 italic"
+                            }`}
+                          >
+                            {hasDriverAssigned ? driverName : "No Driver Assigned"}
+                          </div>
+                          {hasDriverAssigned && driverPhone && (
+                            <div className="text-xs text-color-input-placeholder truncate">
+                              {driverPhone}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-xs font-bold text-color-text-primary truncate">
-                        {driverName}
-                      </div>
-                      <div className="text-xs text-color-input-placeholder">
-                        {driverPhone}
-                      </div>
-                    </div>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={openDriverWhatsApp}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer flex-shrink-0 shadow-xs"
-                    title="WhatsApp Driver"
-                  >
-                    <WhatsAppIcon className="size-3.5" />
-                    <span>WhatsApp</span>
-                  </button>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputDriverName(hasDriverAssigned ? driverName : "");
+                            setInputDriverPhone(hasDriverAssigned ? driverPhone : "+65 ");
+                            setIsEditingDriver(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          {hasDriverAssigned ? "Change" : "Assign"}
+                        </button>
+
+                        {hasDriverAssigned && driverPhone && (
+                          <button
+                            type="button"
+                            onClick={openDriverWhatsApp}
+                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                            title="WhatsApp Driver"
+                          >
+                            <WhatsAppIcon className="size-3.5" />
+                            <span>WhatsApp</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
