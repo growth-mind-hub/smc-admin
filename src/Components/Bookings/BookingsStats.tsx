@@ -5,10 +5,29 @@ import { CalendarDays, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useBookings } from "@/context/BookingContext";
 
 export default function BookingsStats() {
-  const { counts } = useBookings();
+  const { counts, isLoading } = useBookings();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 font-['Manrope']">
+        {[...Array(4)].map((_, idx) => (
+          <div
+            key={idx}
+            className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between animate-pulse"
+          >
+            <div className="space-y-2">
+              <div className="h-3 w-20 bg-slate-200 rounded" />
+              <div className="h-7 w-12 bg-slate-200 rounded" />
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 font-['Manrope']">
       {/* Total Bookings */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
         <div>

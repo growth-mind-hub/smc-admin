@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { VehiclePricingRate, PricingTab } from "@/types/pricing";
-import { initialPricingRates, initialAddOns, initialDistanceRules } from "@/data/initialPricing";
 import {
   getVehicles,
   setVehicleServiceRate,
@@ -228,9 +227,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetToDefaults = () => {
-    setRates(initialPricingRates);
-    setAddOns(initialAddOns);
-    setDistanceRules(initialDistanceRules);
+    refreshPricingData(true);
   };
 
   const updateAddOnItem = async (

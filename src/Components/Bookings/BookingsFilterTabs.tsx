@@ -11,6 +11,7 @@ export default function BookingsFilterTabs() {
     setStatusFilter,
     searchQuery,
     setSearchQuery,
+    isLoading,
   } = useBookings();
 
   const tabs = [
@@ -44,7 +45,7 @@ export default function BookingsFilterTabs() {
                   isActive ? "text-color-text-inverse" : "text-color-input-placeholder"
                 }`}
               >
-                {tab.label} ({tab.count})
+                {tab.label} {isLoading ? "" : `(${tab.count})`}
               </div>
             </button>
           );
