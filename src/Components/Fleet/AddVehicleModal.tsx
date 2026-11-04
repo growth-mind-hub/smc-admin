@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import NumericInput from "@/Components/Common/NumericInput";
 
 export default function AddVehicleModal() {
@@ -14,7 +14,6 @@ export default function AddVehicleModal() {
   const [name, setName] = useState("");
   const [model, setModel] = useState("");
   const [description, setDescription] = useState("");
-  const [imagePath, setImagePath] = useState("/assets/2edae.png");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -30,13 +29,102 @@ export default function AddVehicleModal() {
   const [charter8h, setCharter8h] = useState(480);
   const [isActive, setIsActive] = useState(true);
 
+  // Validation & Submit State
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const markTouched = (field: string) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Field Validation Rules
+  const validationErrors = useMemo(() => {
+    const errs: Record<string, string> = {};
+
+    // Fleet Number
+    const trimmedFleet = fleetNumber.trim();
+    if (!trimmedFleet) {
+      errs.fleetNumber = "Fleet number is required (e.g. SMC-007)";
+    } else if (trimmedFleet.length < 3) {
+      errs.fleetNumber = "Fleet number must be at least 3 characters";
+    }
+
+    // Vehicle Name
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      errs.name = "Vehicle name is required (e.g. 6 Seater Maxi Cab)";
+    } else if (trimmedName.length < 3) {
+      errs.name = "Vehicle name must be at least 3 characters";
+    }
+
+    // Model / Subtitle
+    const trimmedModel = model.trim();
+    if (!trimmedModel) {
+      errs.model = "Vehicle model/make is required (e.g. Toyota Vellfire / Alphard)";
+    }
+
+    // Capacity checks
+    if (paxCapacity < 1 || paxCapacity > 100) {
+      errs.paxCapacity = "Passenger capacity must be between 1 and 100";
+    }
+    if (luggageCapacity < 0 || luggageCapacity > 100) {
+      errs.luggageCapacity = "Luggage capacity must be between 0 and 100";
+    }
+
+    // Pricing checks
+    if (baseFare <= 0) {
+      errs.baseFare = "Base fare must be at least $1 SGD";
+    }
+    if (meetAndGreet < baseFare) {
+      errs.meetAndGreet = "Meet & Greet rate should typically be equal to or greater than base fare";
+    }
+    if (charter3h <= 0) {
+      errs.charter3h = "3-Hour charter rate must be at least $1 SGD";
+    }
+    if (charter8h <= charter3h) {
+      errs.charter8h = "8-Hour charter rate must be greater than 3-Hour charter rate";
+    }
+
+    // Driver Phone check if entered
+    if (driverPhone.trim()) {
+      const dDigits = driverPhone.replace(/[^0-9]/g, "");
+      if (dDigits.length > 0 && dDigits.length < 7) {
+        errs.driverPhone = "Driver phone must have at least 7 digits";
+      }
+    }
+
+    return errs;
+  }, [
+    fleetNumber,
+    name,
+    model,
+    paxCapacity,
+    luggageCapacity,
+    baseFare,
+    meetAndGreet,
+    charter3h,
+    charter8h,
+    driverPhone,
+  ]);
+
+  const hasErrors = Object.keys(validationErrors).length > 0;
 
   if (!isAddVehicleModalOpen) return null;
+
+  const handleClose = () => {
+    setSubmitError(null);
+    setTouched({});
+    closeAddVehicleModal();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        setImageError("Only PNG, JPG, or WEBP images are supported");
+        return;
+      }
       if (file.size > 2 * 1024 * 1024) {
         setImageError("Image size must be under 2MB");
         return;
@@ -49,17 +137,37 @@ export default function AddVehicleModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) {
-      alert("Please enter Vehicle Name.");
+    setSubmitError(null);
+
+    // Mark all fields touched
+    const allTouched: Record<string, boolean> = {
+      fleetNumber: true,
+      name: true,
+      model: true,
+      paxCapacity: true,
+      luggageCapacity: true,
+      baseFare: true,
+      meetAndGreet: true,
+      charter3h: true,
+      charter8h: true,
+      driverPhone: true,
+    };
+    setTouched(allTouched);
+
+    if (hasErrors) {
+      const firstErrorMessage = Object.values(validationErrors)[0];
+      setSubmitError(
+        firstErrorMessage || "Please correct the highlighted form errors before proceeding."
+      );
       return;
     }
 
     try {
       setIsSubmitting(true);
       await addVehicle({
-        fleetNumber: fleetNumber || `SMC-00${totalVehiclesCount + 1}`,
-        name,
-        model: model || "Toyota Vellfire / Alphard",
+        fleetNumber: fleetNumber.trim() || `SMC-00${totalVehiclesCount + 1}`,
+        name: name.trim(),
+        model: model.trim() || "Toyota Vellfire / Alphard",
         description: description.trim(),
         category: "6_seater",
         plateNumber: "SHA 1234 X",
@@ -67,15 +175,18 @@ export default function AddVehicleModal() {
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
         hourlyRate: Math.round(Number(charter8h) / 8),
-        driverName: driverName || "Unassigned",
-        driverPhone: driverPhone || "+65 9000 0000",
+        driverName: driverName.trim() || "Unassigned",
+        driverPhone: driverPhone.trim() || "+65 9000 0000",
         status: (isActive ? "active" : "inactive") as VehicleStatus,
         features: ["Luggage Space", "Air Conditioning", "Executive Seating"],
         imageFile: selectedFile,
       } as any);
+
+      handleClose();
+    } catch (err: any) {
+      setSubmitError(err?.message || "Failed to create vehicle in fleet.");
     } finally {
       setIsSubmitting(false);
-      closeAddVehicleModal();
     }
   };
 
@@ -94,7 +205,7 @@ export default function AddVehicleModal() {
           </div>
           <button
             type="button"
-            onClick={closeAddVehicleModal}
+            onClick={handleClose}
             className="size-8 rounded-lg flex justify-center items-center text-gray-500 hover:text-gray-800 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
@@ -105,8 +216,17 @@ export default function AddVehicleModal() {
         {/* Form Body */}
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="self-stretch flex-1 px-6 py-5 flex flex-col justify-start items-start gap-5 overflow-y-auto"
         >
+          {/* Top Error Banner */}
+          {submitError && (
+            <div className="self-stretch p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700 animate-in fade-in">
+              <AlertCircle className="size-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">{submitError}</div>
+            </div>
+          )}
+
           {/* Vehicle Identity */}
           <div className="self-stretch flex flex-col justify-start items-start">
             <div className="self-stretch flex flex-col justify-start items-start">
@@ -116,52 +236,92 @@ export default function AddVehicleModal() {
             </div>
             <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-3">
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Fleet Number
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Fleet Number <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  required
                   value={fleetNumber}
-                  onChange={(e) => setFleetNumber(e.target.value)}
+                  onChange={(e) => {
+                    setFleetNumber(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("fleetNumber")}
                   placeholder="e.g. SMC-007"
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
+                    touched.fleetNumber && validationErrors.fleetNumber
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.fleetNumber && validationErrors.fleetNumber && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.fleetNumber}</span>
+                  </p>
+                )}
               </div>
 
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Vehicle Name *
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Vehicle Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("name")}
                   placeholder="e.g. 6 Seater Maxi Cab"
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
+                    touched.name && validationErrors.name
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.name && validationErrors.name && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.name}</span>
+                  </p>
+                )}
               </div>
 
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Subtitle / Model
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Subtitle / Model <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  onChange={(e) => {
+                    setModel(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("model")}
                   placeholder="e.g. Toyota Vellfire / Alphard"
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
+                    touched.model && validationErrors.model
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.model && validationErrors.model && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.model}</span>
+                  </p>
+                )}
               </div>
 
               {/* Description (max 1000 characters) */}
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch flex justify-between items-center">
-                  <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
+                  <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                     Vehicle Description
-                  </div>
+                  </label>
                   <span className="text-[10px] text-slate-400 font-medium">
                     {description.length} / 1000
                   </span>
@@ -171,15 +331,15 @@ export default function AddVehicleModal() {
                   onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
                   placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 1000 chars)"
                   rows={3}
-                  className="self-stretch p-3 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none resize-none leading-relaxed"
+                  className="self-stretch p-3 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none leading-relaxed"
                 />
               </div>
 
               {/* Vehicle Photo Selection */}
               <div className="self-stretch flex flex-col justify-start items-start gap-2 pt-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Vehicle Photo (Optional)
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Vehicle Photo <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
+                </label>
 
                 <div className="self-stretch h-32 bg-slate-900 rounded-xl overflow-hidden relative border border-slate-200 flex items-center justify-center">
                   {imagePreviewUrl ? (
@@ -206,7 +366,10 @@ export default function AddVehicleModal() {
                 </div>
 
                 {imageError && (
-                  <div className="text-rose-600 text-xs font-medium">{imageError}</div>
+                  <p className="text-rose-600 text-[11px] font-medium flex items-center gap-1">
+                    <AlertCircle className="size-3" />
+                    <span>{imageError}</span>
+                  </p>
                 )}
 
                 <div className="self-stretch flex items-center gap-2">
@@ -235,6 +398,7 @@ export default function AddVehicleModal() {
                       onClick={() => {
                         setSelectedFile(null);
                         setImagePreviewUrl(null);
+                        setImageError(null);
                       }}
                       className="h-9 px-3 bg-stone-100 hover:bg-stone-200 text-slate-600 text-xs font-semibold rounded-lg border border-stone-300 transition-colors flex items-center justify-center cursor-pointer"
                     >
@@ -250,34 +414,48 @@ export default function AddVehicleModal() {
           <div className="self-stretch flex flex-col justify-start items-start">
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="justify-start text-color-input-placeholder text-xs font-bold font-['Manrope'] uppercase leading-4 tracking-wider">
-                Assigned Driver
+                Assigned Driver <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
               </div>
             </div>
             <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-3">
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   Driver Full Name
-                </div>
+                </label>
                 <input
                   type="text"
                   value={driverName}
                   onChange={(e) => setDriverName(e.target.value)}
                   placeholder="e.g. Ahmad Rizal"
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
 
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   Driver Phone
-                </div>
+                </label>
                 <input
                   type="text"
                   value={driverPhone}
-                  onChange={(e) => setDriverPhone(e.target.value)}
+                  onChange={(e) => {
+                    setDriverPhone(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("driverPhone")}
                   placeholder="+65 9101 1234"
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
+                    touched.driverPhone && validationErrors.driverPhone
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.driverPhone && validationErrors.driverPhone && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.driverPhone}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -291,29 +469,55 @@ export default function AddVehicleModal() {
             </div>
             <div className="self-stretch pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Max Passengers
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Max Passengers <span className="text-red-500">*</span>
+                </label>
                 <NumericInput
                   min={1}
                   max={100}
                   value={paxCapacity}
-                  onChange={setPaxCapacity}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setPaxCapacity(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.paxCapacity && validationErrors.paxCapacity
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.paxCapacity && validationErrors.paxCapacity && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.paxCapacity}</span>
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Max Luggage
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Max Luggage <span className="text-red-500">*</span>
+                </label>
                 <NumericInput
                   min={0}
                   max={100}
                   value={luggageCapacity}
-                  onChange={setLuggageCapacity}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setLuggageCapacity(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.luggageCapacity && validationErrors.luggageCapacity
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.luggageCapacity && validationErrors.luggageCapacity && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.luggageCapacity}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -327,51 +531,103 @@ export default function AddVehicleModal() {
             </div>
             <div className="self-stretch pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Base Fare ($)
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Base Fare ($) <span className="text-red-500">*</span>
+                </label>
                 <NumericInput
-                  min={0}
+                  min={1}
                   value={baseFare}
-                  onChange={setBaseFare}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setBaseFare(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.baseFare && validationErrors.baseFare
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.baseFare && validationErrors.baseFare && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.baseFare}</span>
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Meet & Greet ($)
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  Meet &amp; Greet ($)
+                </label>
                 <NumericInput
-                  min={0}
+                  min={1}
                   value={meetAndGreet}
-                  onChange={setMeetAndGreet}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setMeetAndGreet(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.meetAndGreet && validationErrors.meetAndGreet
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.meetAndGreet && validationErrors.meetAndGreet && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.meetAndGreet}</span>
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  3-Hour Charter ($)
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  3-Hour Charter ($) <span className="text-red-500">*</span>
+                </label>
                 <NumericInput
-                  min={0}
+                  min={1}
                   value={charter3h}
-                  onChange={setCharter3h}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setCharter3h(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.charter3h && validationErrors.charter3h
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.charter3h && validationErrors.charter3h && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.charter3h}</span>
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  8-Hour Charter ($)
-                </div>
+                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                  8-Hour Charter ($) <span className="text-red-500">*</span>
+                </label>
                 <NumericInput
-                  min={0}
+                  min={1}
                   value={charter8h}
-                  onChange={setCharter8h}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(val) => {
+                    setCharter8h(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                    touched.charter8h && validationErrors.charter8h
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
+                {touched.charter8h && validationErrors.charter8h && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.charter8h}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -401,16 +657,18 @@ export default function AddVehicleModal() {
           <div className="self-stretch pt-2 border-t border-color-border-subtle inline-flex justify-start items-start gap-3">
             <button
               type="button"
-              onClick={closeAddVehicleModal}
-              className="flex-1 h-11 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex justify-center items-center text-color-input-placeholder text-sm font-semibold font-['Manrope'] hover:bg-slate-50 cursor-pointer"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="flex-1 h-11 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex justify-center items-center text-color-input-placeholder text-sm font-semibold font-['Manrope'] hover:bg-slate-50 cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 py-2.5 bg-color-background-accent rounded-lg flex justify-center items-center text-color-text-primary text-sm font-semibold font-['Manrope'] hover:brightness-105 cursor-pointer"
+              disabled={isSubmitting}
+              className="flex-1 h-11 py-2.5 bg-color-background-accent rounded-lg flex justify-center items-center text-color-text-primary text-sm font-semibold font-['Manrope'] hover:brightness-105 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
             >
-              Add Vehicle
+              {isSubmitting ? "Adding Vehicle..." : "Add Vehicle"}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Loader2, X, Check } from "lucide-react";
+import { MapPin, Loader2, X, Check, AlertCircle } from "lucide-react";
 import { fetchPlaceSuggestions, PlaceSuggestion } from "@/services/placesService";
 
 interface PlacesAutocompleteInputProps {
@@ -12,6 +12,8 @@ interface PlacesAutocompleteInputProps {
   required?: boolean;
   className?: string;
   debounceMs?: number;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export default function PlacesAutocompleteInput({
@@ -22,6 +24,8 @@ export default function PlacesAutocompleteInput({
   required = false,
   className = "",
   debounceMs = 300,
+  error,
+  onBlur,
 }: PlacesAutocompleteInputProps) {
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -153,6 +157,7 @@ export default function PlacesAutocompleteInput({
           required={required}
           value={inputValue}
           onChange={handleInputChange}
+          onBlur={onBlur}
           onFocus={() => {
             if (suggestions.length > 0 && inputValue.length >= 2) {
               setIsOpen(true);
@@ -161,7 +166,11 @@ export default function PlacesAutocompleteInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full h-10 pl-9 pr-8 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal font-['Manrope'] placeholder:text-slate-900/50 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+          className={`w-full h-10 pl-9 pr-8 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal font-['Manrope'] placeholder:text-slate-900/50 focus:outline-none transition-all ${
+            error
+              ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+              : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+          }`}
         />
 
         {/* Right Status / Actions */}
@@ -179,6 +188,13 @@ export default function PlacesAutocompleteInput({
           )}
         </div>
       </div>
+
+      {error && (
+        <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+          <AlertCircle className="size-3 flex-shrink-0" />
+          <span>{error}</span>
+        </p>
+      )}
 
       {/* Dropdown Suggestions */}
       {isOpen && suggestions.length > 0 && (

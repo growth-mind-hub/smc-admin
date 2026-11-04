@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useBookings } from "@/context/BookingContext";
 import { useFleet } from "@/context/FleetContext";
 import { usePricing } from "@/context/PricingContext";
-import { BookingChannel, VehicleCategory, BookingStatus } from "@/types/booking";
+import { BookingChannel } from "@/types/booking";
 import { AdminManualBookingPayload } from "@/types/api";
 import {
   X,
@@ -16,6 +16,7 @@ import {
   Clock,
   Car,
   UserCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
 import PlacesAutocompleteInput from "@/Components/Common/PlacesAutocompleteInput";
@@ -46,7 +47,7 @@ const SERVICES_CATALOG = [
 ];
 
 export default function NewBookingModal() {
-  const { isNewBookingModalOpen, closeNewBookingModal, createManualBooking, addBooking } =
+  const { isNewBookingModalOpen, closeNewBookingModal, createManualBooking } =
     useBookings();
   const { vehicles } = useFleet();
   const { addOns: availableAddOns } = usePricing();
@@ -80,6 +81,11 @@ export default function NewBookingModal() {
 
   // Add-ons selection: map of add_on_id -> quantity
   const [selectedAddons, setSelectedAddons] = useState<Record<number, number>>({});
+
+  // Field Touched Tracking
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const markTouched = (field: string) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,11 +169,120 @@ export default function NewBookingModal() {
     return base + addOnTotal;
   }, [currentVehicle, currentService, hours, selectedAddons, availableAddOns]);
 
+  // Comprehensive Form Validation Logic
+  const validationErrors = useMemo(() => {
+    const errs: Record<string, string> = {};
+
+    // Customer Name
+    const trimmedName = customerName.trim();
+    if (!trimmedName) {
+      errs.customerName = "Customer full name is required";
+    } else if (trimmedName.length < 2) {
+      errs.customerName = "Customer name must be at least 2 characters";
+    }
+
+    // Phone Validation
+    const rawDigits = phone.replace(/[^0-9]/g, "");
+    if (!rawDigits) {
+      errs.phone = "Phone number is required";
+    } else if (rawDigits.length < 7) {
+      errs.phone = "Phone number must have at least 7 digits";
+    } else if (rawDigits.length > 15) {
+      errs.phone = "Phone number cannot exceed 15 digits";
+    }
+
+    // Email Validation (optional, but if provided must match pattern)
+    if (email.trim()) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email.trim())) {
+        errs.email = "Please enter a valid email address";
+      }
+    }
+
+    // Pickup & Dropoff Addresses
+    if (!pickupLocation.trim()) {
+      errs.pickupLocation = "Pickup address is required";
+    }
+    if (!dropoffLocation.trim()) {
+      errs.dropoffLocation = "Dropoff address is required";
+    } else if (
+      pickupLocation.trim() &&
+      dropoffLocation.trim() &&
+      pickupLocation.trim().toLowerCase() === dropoffLocation.trim().toLowerCase()
+    ) {
+      errs.dropoffLocation = "Dropoff address cannot be identical to pickup address";
+    }
+
+    // Date Validation (cannot book in the past)
+    if (!pickupDate) {
+      errs.pickupDate = "Pickup date is required";
+    } else {
+      const today = new Date().toISOString().split("T")[0];
+      if (pickupDate < today) {
+        errs.pickupDate = "Pickup date cannot be in the past";
+      }
+    }
+
+    // Time Validation
+    if (!pickupTime) {
+      errs.pickupTime = "Pickup time is required";
+    }
+
+    // Passenger Capacity Check
+    if (passengers < 1) {
+      errs.passengers = "At least 1 passenger is required";
+    } else if (currentVehicle?.paxCapacity && passengers > currentVehicle.paxCapacity) {
+      errs.passengers = `Exceeds vehicle capacity (${currentVehicle.paxCapacity} pax)`;
+    }
+
+    // Luggage Capacity Check
+    if (luggageBags < 0) {
+      errs.luggageBags = "Luggage count cannot be negative";
+    } else if (
+      currentVehicle?.luggageCapacity &&
+      luggageBags > currentVehicle.luggageCapacity
+    ) {
+      errs.luggageBags = `Exceeds vehicle capacity (${currentVehicle.luggageCapacity} bags)`;
+    }
+
+    // Driver Phone Check if entered
+    if (driverPhone.trim()) {
+      const dDigits = driverPhone.replace(/[^0-9]/g, "");
+      if (dDigits.length > 0 && dDigits.length < 7) {
+        errs.driverPhone = "Driver phone must have at least 7 digits";
+      }
+    }
+
+    // Hourly Duration Check
+    if (currentService.isHourly && (hours < 1 || hours > 24)) {
+      errs.hours = "Charter duration must be between 1 and 24 hours";
+    }
+
+    return errs;
+  }, [
+    customerName,
+    phone,
+    email,
+    pickupLocation,
+    dropoffLocation,
+    pickupDate,
+    pickupTime,
+    passengers,
+    luggageBags,
+    currentVehicle,
+    driverPhone,
+    currentService.isHourly,
+    hours,
+  ]);
+
+  const hasErrors = Object.keys(validationErrors).length > 0;
+
   if (!isNewBookingModalOpen) return null;
 
   const handleResetAndClose = () => {
     setCreatedBookingResult(null);
     setSubmitError(null);
+    setTouched({});
     closeNewBookingModal();
   };
 
@@ -175,12 +290,27 @@ export default function NewBookingModal() {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!customerName.trim()) {
-      setSubmitError("Customer full name is required.");
-      return;
-    }
-    if (!pickupLocation.trim() || !dropoffLocation.trim()) {
-      setSubmitError("Both pickup and dropoff addresses are required.");
+    // Mark all fields as touched to display errors immediately
+    const allTouched: Record<string, boolean> = {
+      customerName: true,
+      phone: true,
+      email: true,
+      pickupLocation: true,
+      dropoffLocation: true,
+      pickupDate: true,
+      pickupTime: true,
+      passengers: true,
+      luggageBags: true,
+      driverPhone: true,
+      hours: true,
+    };
+    setTouched(allTouched);
+
+    if (hasErrors) {
+      const firstErrorMessage = Object.values(validationErrors)[0];
+      setSubmitError(
+        firstErrorMessage || "Please correct the highlighted form errors before proceeding."
+      );
       return;
     }
 
@@ -338,6 +468,7 @@ export default function NewBookingModal() {
           /* Scrollable Form Body */
           <form
             onSubmit={handleSubmit}
+            noValidate
             className="self-stretch flex-1 px-6 py-5 flex flex-col justify-start items-start gap-5 overflow-y-auto"
           >
             {/* Error Banner */}
@@ -356,44 +487,84 @@ export default function NewBookingModal() {
               <div className="self-stretch pt-2.5 flex flex-col justify-start items-start gap-3">
                 <div className="self-stretch flex flex-col justify-start items-start gap-1">
                   <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                    Full Name *
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    required
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    onBlur={() => markTouched("customerName")}
                     placeholder="e.g. John Smith"
-                    className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
+                      touched.customerName && validationErrors.customerName
+                        ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                        : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                    }`}
                   />
+                  {touched.customerName && validationErrors.customerName && (
+                    <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                      <AlertCircle className="size-3 flex-shrink-0" />
+                      <span>{validationErrors.customerName}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col justify-start items-start gap-1">
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Phone Number *
+                      Phone Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      required
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      onBlur={() => markTouched("phone")}
                       placeholder="+65 9123 4567"
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
+                        touched.phone && validationErrors.phone
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.phone && validationErrors.phone && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertCircle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.phone}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col justify-start items-start gap-1">
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Email Address
+                      Email Address <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
                     </label>
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      onBlur={() => markTouched("email")}
                       placeholder="john@example.com"
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
+                        touched.email && validationErrors.email
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.email && validationErrors.email && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertCircle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.email}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -495,6 +666,12 @@ export default function NewBookingModal() {
                         </button>
                       ))}
                     </div>
+                    {touched.hours && validationErrors.hours && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="size-3" />
+                        <span>{validationErrors.hours}</span>
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -564,78 +741,160 @@ export default function NewBookingModal() {
               </div>
               <div className="self-stretch pt-2.5 flex flex-col gap-3">
                 <PlacesAutocompleteInput
-                  label="Pickup Address *"
+                  label="Pickup Address"
+                  required
                   value={pickupLocation}
-                  onChange={setPickupLocation}
+                  onChange={(val) => {
+                    setPickupLocation(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("pickupLocation")}
+                  error={touched.pickupLocation ? validationErrors.pickupLocation : undefined}
                   placeholder="e.g. Changi Airport Terminal 1"
                 />
 
                 <PlacesAutocompleteInput
-                  label="Dropoff Address *"
+                  label="Dropoff Address"
+                  required
                   value={dropoffLocation}
-                  onChange={setDropoffLocation}
+                  onChange={(val) => {
+                    setDropoffLocation(val);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  onBlur={() => markTouched("dropoffLocation")}
+                  error={touched.dropoffLocation ? validationErrors.dropoffLocation : undefined}
                   placeholder="e.g. Marina Bay Sands"
                 />
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Pickup Date
+                      Pickup Date <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
                       value={pickupDate}
-                      onChange={(e) => setPickupDate(e.target.value)}
+                      onChange={(e) => {
+                        setPickupDate(e.target.value);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      onBlur={() => markTouched("pickupDate")}
                       onClick={(e) => {
                         try {
                           (e.currentTarget as HTMLInputElement).showPicker?.();
                         } catch {}
                       }}
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none cursor-pointer transition-all ${
+                        touched.pickupDate && validationErrors.pickupDate
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.pickupDate && validationErrors.pickupDate && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertCircle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.pickupDate}</span>
+                      </p>
+                    )}
                   </div>
+
                   <div className="flex flex-col gap-1">
                     <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Pickup Time
+                      Pickup Time <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="time"
                       value={pickupTime}
-                      onChange={(e) => setPickupTime(e.target.value)}
+                      onChange={(e) => {
+                        setPickupTime(e.target.value);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      onBlur={() => markTouched("pickupTime")}
                       onClick={(e) => {
                         try {
                           (e.currentTarget as HTMLInputElement).showPicker?.();
                         } catch {}
                       }}
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none cursor-pointer transition-all ${
+                        touched.pickupTime && validationErrors.pickupTime
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.pickupTime && validationErrors.pickupTime && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertCircle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.pickupTime}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Passengers
-                    </label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                        Passengers
+                      </label>
+                      {currentVehicle && (
+                        <span className="text-[10px] text-slate-400">
+                          Max: {currentVehicle.paxCapacity}
+                        </span>
+                      )}
+                    </div>
                     <NumericInput
                       min={1}
                       max={100}
                       value={passengers}
-                      onChange={setPassengers}
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      onChange={(val) => {
+                        setPassengers(val);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none ${
+                        touched.passengers && validationErrors.passengers
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.passengers && validationErrors.passengers && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertTriangle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.passengers}</span>
+                      </p>
+                    )}
                   </div>
+
                   <div className="flex flex-col gap-1">
-                    <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                      Luggage Bags
-                    </label>
+                    <div className="flex justify-between items-center">
+                      <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
+                        Luggage Bags
+                      </label>
+                      {currentVehicle && (
+                        <span className="text-[10px] text-slate-400">
+                          Max: {currentVehicle.luggageCapacity}
+                        </span>
+                      )}
+                    </div>
                     <NumericInput
                       min={0}
                       max={100}
                       value={luggageBags}
-                      onChange={setLuggageBags}
-                      className="w-full h-10 px-3 py-2 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-slate-900 font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      onChange={(val) => {
+                        setLuggageBags(val);
+                        if (submitError) setSubmitError(null);
+                      }}
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none ${
+                        touched.luggageBags && validationErrors.luggageBags
+                          ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                          : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
+                    {touched.luggageBags && validationErrors.luggageBags && (
+                      <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                        <AlertTriangle className="size-3 flex-shrink-0" />
+                        <span>{validationErrors.luggageBags}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -718,20 +977,38 @@ export default function NewBookingModal() {
                 <span>Assigned Driver (Optional)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <input
-                  type="text"
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="Driver Name (e.g. Ahmad Rizal)"
-                  className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
-                <input
-                  type="text"
-                  value={driverPhone}
-                  onChange={(e) => setDriverPhone(e.target.value)}
-                  placeholder="Driver Phone (e.g. +65 9123 4567)"
-                  className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="text"
+                    value={driverName}
+                    onChange={(e) => setDriverName(e.target.value)}
+                    placeholder="Driver Name (e.g. Ahmad Rizal)"
+                    className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="text"
+                    value={driverPhone}
+                    onChange={(e) => {
+                      setDriverPhone(e.target.value);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    onBlur={() => markTouched("driverPhone")}
+                    placeholder="Driver Phone (e.g. +65 9123 4567)"
+                    className={`w-full h-9 px-3 bg-white rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
+                      touched.driverPhone && validationErrors.driverPhone
+                        ? "border border-red-400 focus:ring-1 focus:ring-red-400"
+                        : "border border-slate-300 focus:ring-1 focus:ring-amber-500"
+                    }`}
+                  />
+                  {touched.driverPhone && validationErrors.driverPhone && (
+                    <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5">
+                      <AlertCircle className="size-3 flex-shrink-0" />
+                      <span>{validationErrors.driverPhone}</span>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import NumericInput from "@/Components/Common/NumericInput";
 
 export default function EditVehicleModal() {
@@ -66,6 +66,7 @@ export default function EditVehicleModal() {
   }, [editingVehicle]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!isEditVehicleModalOpen || !editingVehicle) return null;
 
@@ -119,6 +120,24 @@ export default function EditVehicleModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
+
+    if (!name.trim()) {
+      setSubmitError("Vehicle name is required.");
+      return;
+    }
+    if (paxCapacity < 1 || paxCapacity > 100) {
+      setSubmitError("Passenger capacity must be between 1 and 100.");
+      return;
+    }
+    if (luggageCapacity < 0 || luggageCapacity > 100) {
+      setSubmitError("Luggage capacity must be between 0 and 100.");
+      return;
+    }
+    if (baseFare <= 0) {
+      setSubmitError("Base fare must be at least $1 SGD.");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -133,21 +152,24 @@ export default function EditVehicleModal() {
 
       await updateVehicle(editingVehicle.id, {
         fleetNumber,
-        name,
-        model,
+        name: name.trim(),
+        model: model.trim(),
         description: description.trim(),
         imagePath,
-        driverName,
-        driverPhone,
+        driverName: driverName.trim(),
+        driverPhone: driverPhone.trim(),
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
         hourlyRate: Math.round(Number(charter8h) / 8),
         status: (isActive ? "active" : "inactive") as VehicleStatus,
       });
+
+      closeEditVehicleModal();
+    } catch (err: any) {
+      setSubmitError(err?.message || "Failed to update vehicle.");
     } finally {
       setIsSubmitting(false);
-      closeEditVehicleModal();
     }
   };
 
@@ -179,6 +201,13 @@ export default function EditVehicleModal() {
           onSubmit={handleSubmit}
           className="self-stretch flex-1 px-6 py-5 flex flex-col justify-start items-start gap-5 overflow-y-auto"
         >
+          {/* Top Error Banner */}
+          {submitError && (
+            <div className="self-stretch p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5 text-xs text-red-700 animate-in fade-in">
+              <AlertCircle className="size-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">{submitError}</div>
+            </div>
+          )}
           {/* Vehicle Identity */}
           <div className="self-stretch flex flex-col justify-start items-start">
             <div className="self-stretch flex flex-col justify-start items-start">
@@ -499,15 +528,17 @@ export default function EditVehicleModal() {
             <button
               type="button"
               onClick={closeEditVehicleModal}
-              className="flex-1 h-11 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex justify-center items-center text-color-input-placeholder text-sm font-semibold font-['Manrope'] hover:bg-slate-50 cursor-pointer"
+              disabled={isSubmitting}
+              className="flex-1 h-11 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex justify-center items-center text-color-input-placeholder text-sm font-semibold font-['Manrope'] hover:bg-slate-50 cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 py-2.5 bg-color-background-accent rounded-lg flex justify-center items-center text-color-text-primary text-sm font-semibold font-['Manrope'] hover:brightness-105 cursor-pointer"
+              disabled={isSubmitting}
+              className="flex-1 h-11 py-2.5 bg-color-background-accent rounded-lg flex justify-center items-center text-color-text-primary text-sm font-semibold font-['Manrope'] hover:brightness-105 cursor-pointer disabled:opacity-50 transition-all shadow-xs"
             >
-              Save Changes
+              {isSubmitting ? "Saving Changes..." : "Save Changes"}
             </button>
           </div>
         </form>
