@@ -199,8 +199,6 @@ export async function apiRequest<T>(
 
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
-      } else if (API_CONFIG.ADMIN_API_KEY) {
-        headers["Authorization"] = `Bearer ${API_CONFIG.ADMIN_API_KEY}`;
       }
     }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Vehicle, VehicleStatus } from "@/types/fleet";
 import {
   getVehicles,
@@ -113,15 +114,26 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
 
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const hasFetchedRef = useRef(false);
+  const pathname = usePathname();
+  const isFetchingRef = useRef(false);
 
   const refreshVehicles = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     try {
       setIsLoading(true);
       setError(null);
       const res = await getVehicles();
-      if (res && res.data && res.data.length > 0) {
-        const activeMapped = res.data.map((item, idx) => mapApiToVehicle(item, idx));
+
+      const rawList: any[] =
+        (res && Array.isArray(res.data) && res.data) ||
+        (res && Array.isArray(res.vehicles) && res.vehicles) ||
+        (Array.isArray(res) && res) ||
+        [];
+
+      if (rawList && rawList.length > 0) {
+        const activeMapped = rawList.map((item, idx) => mapApiToVehicle(item, idx));
 
         // Inactive vehicles disappear from public /api/v1/vehicles lists
         // Retrieve any tracked inactive vehicle IDs to fetch via /api/v1/vehicles/:id
@@ -161,14 +173,20 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
       setVehicles((prev) => prev);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
+    refreshVehicles();
+  }, [pathname, refreshVehicles]);
+
+  useEffect(() => {
+    const handleAuthChange = () => {
       refreshVehicles();
-    }
+    };
+    window.addEventListener("smc_auth_change", handleAuthChange);
+    return () => window.removeEventListener("smc_auth_change", handleAuthChange);
   }, [refreshVehicles]);
 
   const openAddVehicleModal = () => setIsAddVehicleModalOpen(true);

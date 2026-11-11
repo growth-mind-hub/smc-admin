@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { VehiclePricingRate, PricingTab } from "@/types/pricing";
 import {
   getVehicles,
@@ -77,10 +78,14 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
     "idle"
   );
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const hasFetchedRef = useRef(false);
+  const pathname = usePathname();
+  const isFetchingRef = useRef(false);
 
   const refreshPricingData = useCallback(async (forceFresh?: boolean) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     setIsLoading(true);
+
     if (forceFresh) {
       invalidateApiCache();
     }
@@ -88,8 +93,14 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
       // 1. Fetch live vehicles & rates (deduplicated by client)
       try {
         const vRes = await getVehicles();
-        if (vRes && vRes.data && vRes.data.length > 0) {
-          const liveRates: VehiclePricingRate[] = vRes.data.map((v) => {
+        const vList: any[] =
+          (vRes && Array.isArray(vRes.data) && vRes.data) ||
+          (vRes && Array.isArray(vRes.vehicles) && vRes.vehicles) ||
+          (Array.isArray(vRes) && vRes) ||
+          [];
+
+        if (vList && vList.length > 0) {
+          const liveRates: VehiclePricingRate[] = vList.map((v) => {
             const baseFare =
               v.prices?.departure_transfer?.amount ||
               v.prices?.arrival?.amount ||
@@ -128,8 +139,12 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
       // 2. Fetch add-ons (deduplicated by client)
       try {
         const aRes = await getAddOns();
-        if (aRes && aRes.data) {
-          setAddOns(aRes.data);
+        const aList: any[] =
+          (aRes && Array.isArray(aRes.data) && aRes.data) ||
+          (Array.isArray(aRes) && aRes) ||
+          [];
+        if (aList && aList.length >= 0) {
+          setAddOns(aList);
         }
       } catch (err) {
         console.warn("Could not load add-ons:", err);
@@ -139,8 +154,12 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
       // 3. Fetch distance rules (deduplicated by client)
       try {
         const dRes = await getDistanceRules();
-        if (dRes && dRes.data) {
-          setDistanceRules(dRes.data);
+        const dList: any[] =
+          (dRes && Array.isArray(dRes.data) && dRes.data) ||
+          (Array.isArray(dRes) && dRes) ||
+          [];
+        if (dList && dList.length >= 0) {
+          setDistanceRules(dList);
         }
       } catch (err) {
         console.warn("Could not load distance rules:", err);
@@ -148,14 +167,20 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
       }
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      refreshPricingData();
-    }
+    refreshPricingData();
+  }, [pathname, refreshPricingData]);
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      refreshPricingData(true);
+    };
+    window.addEventListener("smc_auth_change", handleAuthChange);
+    return () => window.removeEventListener("smc_auth_change", handleAuthChange);
   }, [refreshPricingData]);
 
   const updateRate = (

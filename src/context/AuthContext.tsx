@@ -43,14 +43,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {}
 
-      setUser(
-        restoredUser || {
-          name: "Admin",
-          email: "admin@singaporemaxicabs.com.sg",
-          role: "admin",
-          initials: "AD",
-        }
-      );
+      const activeUser = restoredUser || {
+        name: "Admin",
+        email: "admin@singaporemaxicabs.com.sg",
+        role: "admin",
+        initials: "AD",
+      };
+      setUser(activeUser);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("smc_auth_change"));
+      }
     }
   }, []);
 
@@ -107,6 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch {}
           }
           setUser(loggedUser);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("smc_auth_change"));
+          }
           router.push("/");
           return true;
         } else {
@@ -126,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       try {
         localStorage.removeItem("smc_user");
+        window.dispatchEvent(new Event("smc_auth_change"));
       } catch {}
     }
     setUser(null);

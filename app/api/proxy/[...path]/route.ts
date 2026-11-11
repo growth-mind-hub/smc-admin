@@ -29,12 +29,13 @@ async function handleProxy(
       if (val) headers.set(header, val);
     });
 
-    // Check Authorization header, or fallback to accessToken cookie, or ADMIN_API_KEY
-    if (!headers.has("authorization")) {
+    // Check Authorization header: prefer accessToken cookie if authorization is missing or is the fallback key
+    const currentAuth = headers.get("authorization");
+    if (!currentAuth || currentAuth.includes(API_CONFIG.ADMIN_API_KEY)) {
       const cookieToken = request.cookies.get("accessToken")?.value;
       if (cookieToken) {
         headers.set("authorization", `Bearer ${cookieToken}`);
-      } else if (API_CONFIG.ADMIN_API_KEY) {
+      } else if (API_CONFIG.ADMIN_API_KEY && !currentAuth) {
         headers.set("authorization", `Bearer ${API_CONFIG.ADMIN_API_KEY}`);
       }
     }

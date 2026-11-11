@@ -9,6 +9,9 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+import { usePathname } from "next/navigation";
+import Cookies from "js-cookie";
+import { useAuth } from "@/context/AuthContext";
 import { Booking, BookingStatus, BookingChannel } from "@/types/booking";
 import {
   getAdminBookings,
@@ -171,6 +174,8 @@ function mapBackendBookingToFrontend(
 }
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const pathname = usePathname();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
@@ -178,14 +183,35 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [channelFilter, setChannelFilter] = useState("all");
-  const hasFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
   const refreshBookings = useCallback(async () => {
+    // Avoid running on login page when unauthenticated
+    if (typeof window !== "undefined") {
+      const token = Cookies.get("accessToken");
+      if (!token && pathname === "/login") {
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     try {
       setIsLoading(true);
       const res = await getAdminBookings();
-      if (res && res.bookings && Array.isArray(res.bookings)) {
-        const mapped = res.bookings.map((b, idx) =>
+
+      // Handle all possible response shapes: res.bookings, res.data, res.data.bookings, or array directly
+      const rawList: any[] =
+        (res && Array.isArray(res.bookings) && res.bookings) ||
+        (res && Array.isArray(res.data) && res.data) ||
+        (res && res.data && Array.isArray(res.data.bookings) && res.data.bookings) ||
+        (Array.isArray(res) && res) ||
+        [];
+
+      if (rawList) {
+        const mapped = rawList.map((b, idx) =>
           mapBackendBookingToFrontend(b, idx)
         );
         setBookings(mapped);
@@ -196,14 +222,33 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       setBookings((prev) => prev);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, []);
+  }, [pathname]);
 
+  // Initial load and route change trigger
   useEffect(() => {
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
+    if (pathname === "/login") return;
+
+    const token = typeof window !== "undefined" ? Cookies.get("accessToken") : null;
+    if (token || isAuthenticated) {
       refreshBookings();
     }
+  }, [isAuthenticated, pathname, refreshBookings]);
+
+  // Listen to login/logout events across the app
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const token = typeof window !== "undefined" ? Cookies.get("accessToken") : null;
+      if (token) {
+        refreshBookings();
+      } else {
+        setBookings([]);
+      }
+    };
+
+    window.addEventListener("smc_auth_change", handleAuthChange);
+    return () => window.removeEventListener("smc_auth_change", handleAuthChange);
   }, [refreshBookings]);
 
   const openNewBookingModal = () => setIsNewBookingModalOpen(true);

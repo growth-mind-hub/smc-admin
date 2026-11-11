@@ -10,7 +10,13 @@ import { useBookings } from "@/context/BookingContext";
 import { Plus } from "lucide-react";
 
 export default function BookingsPage() {
-  const { counts, openNewBookingModal, isLoading } = useBookings();
+  const { counts, openNewBookingModal, isLoading, bookings, refreshBookings } = useBookings();
+
+  React.useEffect(() => {
+    if (bookings.length === 0) {
+      refreshBookings();
+    }
+  }, [bookings.length, refreshBookings]);
 
   return (
     <AdminLayout>

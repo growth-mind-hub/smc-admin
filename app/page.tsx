@@ -11,8 +11,20 @@ import { useFleet } from "@/context/FleetContext";
 import { Calendar, Clock, Car, Coins } from "lucide-react";
 
 export default function DashboardPage() {
-  const { counts, bookings, isLoading: bookingsLoading } = useBookings();
-  const { activeVehiclesCount, totalVehiclesCount, isLoading: fleetLoading } = useFleet();
+  const { counts, bookings, isLoading: bookingsLoading, refreshBookings } = useBookings();
+  const { activeVehiclesCount, totalVehiclesCount, isLoading: fleetLoading, refreshVehicles, vehicles } = useFleet();
+
+  React.useEffect(() => {
+    if (bookings.length === 0) {
+      refreshBookings();
+    }
+  }, [bookings.length, refreshBookings]);
+
+  React.useEffect(() => {
+    if (vehicles.length === 0) {
+      refreshVehicles();
+    }
+  }, [vehicles.length, refreshVehicles]);
 
   // Compute live revenue dynamically from confirmed and completed trips
   const totalRevenue = useMemo(() => {
