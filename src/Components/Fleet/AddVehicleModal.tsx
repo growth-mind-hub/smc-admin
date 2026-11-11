@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
 import { X, AlertCircle } from "lucide-react";
@@ -12,7 +12,6 @@ export default function AddVehicleModal() {
 
   const [fleetNumber, setFleetNumber] = useState(`SMC-00${totalVehiclesCount + 1}`);
   const [name, setName] = useState("");
-  const [model, setModel] = useState("");
   const [description, setDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -29,6 +28,22 @@ export default function AddVehicleModal() {
   const [charter8h, setCharter8h] = useState(480);
   const [isActive, setIsActive] = useState(true);
 
+  // Description word count
+  const wordCount = useMemo(() => {
+    const trimmed = description.trim();
+    return trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  }, [description]);
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    const words = val.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 300) {
+      setDescription(words.slice(0, 300).join(" "));
+    } else {
+      setDescription(val);
+    }
+  };
+
   // Validation & Submit State
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const markTouched = (field: string) =>
@@ -37,16 +52,42 @@ export default function AddVehicleModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const handleClose = useCallback(() => {
+    setSubmitError(null);
+    setTouched({});
+    closeAddVehicleModal();
+  }, [closeAddVehicleModal]);
+
+  // Lock background scrolling and handle Escape key when modal is open
+  useEffect(() => {
+    if (!isAddVehicleModalOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAddVehicleModalOpen, handleClose]);
+
   // Field Validation Rules
   const validationErrors = useMemo(() => {
     const errs: Record<string, string> = {};
 
-    // Fleet Number
+    // Fleet Number Plate
     const trimmedFleet = fleetNumber.trim();
     if (!trimmedFleet) {
-      errs.fleetNumber = "Fleet number is required (e.g. SMC-007)";
+      errs.fleetNumber = "Fleet number plate is required (e.g. SMC-007)";
     } else if (trimmedFleet.length < 3) {
-      errs.fleetNumber = "Fleet number must be at least 3 characters";
+      errs.fleetNumber = "Fleet number plate must be at least 3 characters";
     }
 
     // Vehicle Name
@@ -57,10 +98,9 @@ export default function AddVehicleModal() {
       errs.name = "Vehicle name must be at least 3 characters";
     }
 
-    // Model / Subtitle
-    const trimmedModel = model.trim();
-    if (!trimmedModel) {
-      errs.model = "Vehicle model/make is required (e.g. Toyota Vellfire / Alphard)";
+    // Description word count check
+    if (wordCount > 300) {
+      errs.description = "Vehicle description cannot exceed 300 words";
     }
 
     // Capacity checks
@@ -97,7 +137,7 @@ export default function AddVehicleModal() {
   }, [
     fleetNumber,
     name,
-    model,
+    wordCount,
     paxCapacity,
     luggageCapacity,
     baseFare,
@@ -110,12 +150,6 @@ export default function AddVehicleModal() {
   const hasErrors = Object.keys(validationErrors).length > 0;
 
   if (!isAddVehicleModalOpen) return null;
-
-  const handleClose = () => {
-    setSubmitError(null);
-    setTouched({});
-    closeAddVehicleModal();
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,7 +177,6 @@ export default function AddVehicleModal() {
     const allTouched: Record<string, boolean> = {
       fleetNumber: true,
       name: true,
-      model: true,
       paxCapacity: true,
       luggageCapacity: true,
       baseFare: true,
@@ -167,10 +200,10 @@ export default function AddVehicleModal() {
       await addVehicle({
         fleetNumber: fleetNumber.trim() || `SMC-00${totalVehiclesCount + 1}`,
         name: name.trim(),
-        model: model.trim() || "Toyota Vellfire / Alphard",
+        model: name.trim() || "Vehicle",
         description: description.trim(),
         category: "6_seater",
-        plateNumber: "SHA 1234 X",
+        plateNumber: fleetNumber.trim() || "SHA 1234 X",
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
@@ -193,7 +226,10 @@ export default function AddVehicleModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-color-overlay-hero flex justify-center items-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 bg-color-overlay-hero flex justify-center items-center p-3 sm:p-4 animate-in fade-in duration-200"
+      onClick={handleClose}
+    >
       <div
         className="w-full max-w-[520px] max-h-[90vh] bg-color-background-white rounded-2xl shadow-2xl flex flex-col justify-start items-start overflow-hidden font-['Manrope']"
         onClick={(e) => e.stopPropagation()}
@@ -239,7 +275,7 @@ export default function AddVehicleModal() {
             <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-3">
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                  Fleet Number <span className="text-red-500">*</span>
+                  Fleet Number Plate <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -291,50 +327,33 @@ export default function AddVehicleModal() {
                 )}
               </div>
 
-              <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                  Subtitle / Model <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                    if (submitError) setSubmitError(null);
-                  }}
-                  onBlur={() => markTouched("model")}
-                  placeholder="e.g. Toyota Vellfire / Alphard"
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
-                    touched.model && validationErrors.model
-                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
-                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
-                  }`}
-                />
-                {touched.model && validationErrors.model && (
-                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
-                    <AlertCircle className="size-3 flex-shrink-0" />
-                    <span>{validationErrors.model}</span>
-                  </p>
-                )}
-              </div>
-
-              {/* Description (max 1000 characters) */}
+              {/* Description (max 300 words) */}
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch flex justify-between items-center">
                   <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                     Vehicle Description
                   </label>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {description.length} / 1000
+                  <span
+                    className={`text-[10px] font-medium ${
+                      wordCount > 300 ? "text-red-500" : "text-slate-400"
+                    }`}
+                  >
+                    {wordCount} / 300 words
                   </span>
                 </div>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
-                  placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 1000 chars)"
+                  onChange={handleDescriptionChange}
+                  placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 300 words)"
                   rows={3}
                   className="self-stretch p-3 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none leading-relaxed"
                 />
+                {touched.description && validationErrors.description && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.description}</span>
+                  </p>
+                )}
               </div>
 
               {/* Vehicle Photo Selection */}

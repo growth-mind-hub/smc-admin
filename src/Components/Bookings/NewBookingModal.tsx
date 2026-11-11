@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useBookings } from "@/context/BookingContext";
 import { useFleet } from "@/context/FleetContext";
 import { usePricing } from "@/context/PricingContext";
@@ -277,14 +277,34 @@ export default function NewBookingModal() {
 
   const hasErrors = Object.keys(validationErrors).length > 0;
 
-  if (!isNewBookingModalOpen) return null;
-
-  const handleResetAndClose = () => {
+  const handleResetAndClose = useCallback(() => {
     setCreatedBookingResult(null);
     setSubmitError(null);
     setTouched({});
     closeNewBookingModal();
-  };
+  }, [closeNewBookingModal]);
+
+  // Lock background scrolling and handle Escape key when modal is open
+  useEffect(() => {
+    if (!isNewBookingModalOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleResetAndClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isNewBookingModalOpen, handleResetAndClose]);
+
+  if (!isNewBookingModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -15,10 +15,9 @@ export default function FleetCardSkeleton() {
 
       {/* Card Content Body */}
       <div className="self-stretch flex-1 p-4 flex flex-col justify-start items-start gap-3 w-full">
-        {/* Title & Model */}
+        {/* Title & Description Skeleton */}
         <div className="self-stretch flex flex-col justify-start items-start gap-1.5 w-full">
           <div className="h-5 w-3/4 bg-stone-200 rounded" />
-          <div className="h-3.5 w-1/2 bg-stone-200 rounded" />
           <div className="h-3 w-full bg-stone-100 rounded mt-0.5" />
         </div>
 

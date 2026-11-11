@@ -100,20 +100,15 @@ export default function FleetCard({ vehicle }: FleetCardProps) {
 
       {/* Card Content Body */}
       <div className="self-stretch flex-1 p-4 flex flex-col justify-start items-start gap-3">
-        {/* Title & Model & Description */}
+        {/* Title & Description */}
         <div className="self-stretch flex flex-col justify-start items-start">
           <div className="self-stretch flex flex-col justify-start items-start">
             <div className="justify-start text-color-text-primary text-base font-bold font-['Manrope'] leading-6 truncate">
               {vehicle.name}
             </div>
           </div>
-          <div className="self-stretch flex flex-col justify-start items-start">
-            <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4 truncate">
-              {vehicle.model}
-            </div>
-          </div>
           {vehicle.description && (
-            <div className="self-stretch pt-1.5">
+            <div className="self-stretch pt-1">
               <p className="text-[11px] text-slate-600 font-normal leading-relaxed line-clamp-2" title={vehicle.description}>
                 {vehicle.description}
               </p>

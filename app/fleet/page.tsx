@@ -4,8 +4,6 @@ import React from "react";
 import AdminLayout from "@/Components/Layout/AdminLayout";
 import FleetCard from "@/Components/Fleet/FleetCard";
 import FleetCardSkeleton from "@/Components/Fleet/FleetCardSkeleton";
-import AddVehicleModal from "@/Components/Fleet/AddVehicleModal";
-import EditVehicleModal from "@/Components/Fleet/EditVehicleModal";
 import { useFleet } from "@/context/FleetContext";
 import { Plus } from "lucide-react";
 
@@ -111,10 +109,6 @@ export default function FleetPage() {
             ))}
           </div>
         )}
-
-        {/* Modals */}
-        <AddVehicleModal />
-        <EditVehicleModal />
       </div>
     </AdminLayout>
   );

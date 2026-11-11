@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
 import { X, AlertCircle } from "lucide-react";
@@ -64,6 +64,42 @@ export default function EditVehicleModal() {
       setIsActive(editingVehicle.status === "active");
     }
   }, [editingVehicle]);
+
+  // Description word count
+  const wordCount = useMemo(() => {
+    const trimmed = description.trim();
+    return trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  }, [description]);
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    const words = val.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 300) {
+      setDescription(words.slice(0, 300).join(" "));
+    } else {
+      setDescription(val);
+    }
+  };
+
+  // Lock background scrolling and handle Escape key when modal is open
+  useEffect(() => {
+    if (!isEditVehicleModalOpen || !editingVehicle) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeEditVehicleModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEditVehicleModalOpen, editingVehicle, closeEditVehicleModal]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -138,6 +174,10 @@ export default function EditVehicleModal() {
       setSubmitError("Base fare must be at least $1 SGD.");
       return;
     }
+    if (wordCount > 300) {
+      setSubmitError("Vehicle description cannot exceed 300 words.");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -151,10 +191,11 @@ export default function EditVehicleModal() {
       }
 
       await updateVehicle(editingVehicle.id, {
-        fleetNumber,
+        fleetNumber: fleetNumber.trim(),
         name: name.trim(),
-        model: model.trim(),
+        model: model.trim() || name.trim() || "Vehicle",
         description: description.trim(),
+        plateNumber: fleetNumber.trim(),
         imagePath,
         driverName: driverName.trim(),
         driverPhone: driverPhone.trim(),
@@ -176,7 +217,10 @@ export default function EditVehicleModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-color-overlay-hero flex justify-center items-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 bg-color-overlay-hero flex justify-center items-center p-3 sm:p-4 animate-in fade-in duration-200"
+      onClick={closeEditVehicleModal}
+    >
       <div
         className="w-full max-w-[520px] max-h-[90vh] bg-color-background-white rounded-2xl shadow-2xl flex flex-col justify-start items-start overflow-hidden font-['Manrope']"
         onClick={(e) => e.stopPropagation()}
@@ -220,7 +264,7 @@ export default function EditVehicleModal() {
             <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-3">
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Fleet Number
+                  Fleet Number Plate
                 </div>
                 <input
                   type="text"
@@ -244,32 +288,24 @@ export default function EditVehicleModal() {
                 />
               </div>
 
-              <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Subtitle / Model
-                </div>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
-                />
-              </div>
-
-              {/* Description (max 1000 characters) */}
+              {/* Description (max 300 words) */}
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch flex justify-between items-center">
                   <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
                     Vehicle Description
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {description.length} / 1000
+                  <span
+                    className={`text-[10px] font-medium ${
+                      wordCount > 300 ? "text-red-500" : "text-slate-400"
+                    }`}
+                  >
+                    {wordCount} / 300 words
                   </span>
                 </div>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
-                  placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 1000 chars)"
+                  onChange={handleDescriptionChange}
+                  placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 300 words)"
                   rows={3}
                   className="self-stretch p-3 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none resize-none leading-relaxed"
                 />
