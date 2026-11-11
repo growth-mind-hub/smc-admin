@@ -195,7 +195,6 @@ export default function BookingDetailsModal() {
       ...(activeBooking.specialRequest || activeBooking.notes
         ? [`📝 *Notes:* ${activeBooking.specialRequest || activeBooking.notes}`]
         : []),
-      `💰 *Fare:* SGD $${activeBooking.fare}`,
       ``,
       `Please confirm once received.`,
     ];
