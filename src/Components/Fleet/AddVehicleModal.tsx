@@ -28,20 +28,40 @@ export default function AddVehicleModal() {
   const [charter8h, setCharter8h] = useState(480);
   const [isActive, setIsActive] = useState(true);
 
-  // Description word count
+  // Description word count helper
   const wordCount = useMemo(() => {
     const trimmed = description.trim();
     return trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
   }, [description]);
 
+  const truncateToWordLimit = (text: string, maxWords: number): string => {
+    const trimmed = text.trim();
+    if (!trimmed) return text;
+    const words = trimmed.split(/\s+/).filter(Boolean);
+    if (words.length <= maxWords) return text;
+
+    const regex = /\S+/g;
+    let count = 0;
+    let cutIndex = text.length;
+    while (regex.exec(text) !== null) {
+      count++;
+      if (count === maxWords) {
+        cutIndex = regex.lastIndex;
+        break;
+      }
+    }
+    return text.slice(0, cutIndex);
+  };
+
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     const words = val.trim().split(/\s+/).filter(Boolean);
     if (words.length > 300) {
-      setDescription(words.slice(0, 300).join(" "));
+      setDescription(truncateToWordLimit(val, 300));
     } else {
       setDescription(val);
     }
+    if (submitError) setSubmitError(null);
   };
 
   // Validation & Submit State
@@ -116,7 +136,7 @@ export default function AddVehicleModal() {
       errs.baseFare = "Base fare must be at least $1 SGD";
     }
     if (meetAndGreet < baseFare) {
-      errs.meetAndGreet = "Meet & Greet rate should typically be equal to or greater than base fare";
+      errs.meetAndGreet = "Arrival Driveway Pickup rate should typically be equal to or greater than base fare";
     }
     if (charter3h <= 0) {
       errs.charter3h = "3-Hour charter rate must be at least $1 SGD";
@@ -201,7 +221,7 @@ export default function AddVehicleModal() {
         fleetNumber: fleetNumber.trim() || `SMC-00${totalVehiclesCount + 1}`,
         name: name.trim(),
         model: name.trim() || "Vehicle",
-        description: description.trim(),
+        description: truncateToWordLimit(description.trim(), 300),
         category: "6_seater",
         plateNumber: fleetNumber.trim() || "SHA 1234 X",
         paxCapacity: Number(paxCapacity),
@@ -334,24 +354,43 @@ export default function AddVehicleModal() {
                     Vehicle Description
                   </label>
                   <span
-                    className={`text-[10px] font-medium ${
-                      wordCount > 300 ? "text-red-500" : "text-slate-400"
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
+                      wordCount > 300
+                        ? "text-red-600 bg-red-50 border border-red-200"
+                        : wordCount === 300
+                        ? "text-amber-800 bg-amber-50 border border-amber-300"
+                        : wordCount >= 270
+                        ? "text-amber-600 font-medium"
+                        : "text-slate-400 font-medium"
                     }`}
                   >
-                    {wordCount} / 300 words
+                    {wordCount} / 300 words {wordCount === 300 && "(Max reached)"}
                   </span>
                 </div>
                 <textarea
                   value={description}
                   onChange={handleDescriptionChange}
-                  placeholder="The Toyota Alphard / Vellfire is an executive MPV for families and small groups... (max 300 words)"
+                  onBlur={() => markTouched("description")}
+                  placeholder="Enter vehicle description... (max 300 words)"
                   rows={3}
-                  className="self-stretch p-3 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none leading-relaxed"
+                  className={`self-stretch p-3 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none resize-none leading-relaxed transition-all ${
+                    wordCount > 300 || (touched.description && validationErrors.description)
+                      ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                      : wordCount === 300
+                      ? "bg-amber-50/20 outline-amber-400 focus:ring-1 focus:ring-amber-500"
+                      : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                  }`}
                 />
                 {touched.description && validationErrors.description && (
                   <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
                     <AlertCircle className="size-3 flex-shrink-0" />
                     <span>{validationErrors.description}</span>
+                  </p>
+                )}
+                {wordCount === 300 && !validationErrors.description && (
+                  <p className="text-amber-700 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>300 words limit reached. Additional words will not be accepted.</span>
                   </p>
                 )}
               </div>
@@ -578,7 +617,7 @@ export default function AddVehicleModal() {
 
               <div className="flex flex-col justify-start items-start gap-1">
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                  Meet &amp; Greet ($)
+                  Arrival Driveway Pickup ($)
                 </label>
                 <NumericInput
                   min={1}

@@ -139,7 +139,7 @@ export default function BookingDetailsModal() {
       ``,
       `👥 *Passengers:* ${activeBooking.passengers || 1} pax`,
       `🧳 *Luggage:* ${activeBooking.luggageBags ?? activeBooking.luggage ?? 0} bags`,
-      ...(activeBooking.meetAndGreet ? [`🤝 *Meet & Greet:* Yes (Included)`] : []),
+      ...(activeBooking.meetAndGreet ? [`🤝 *Arrival Driveway Pickup:* Yes (Included)`] : []),
       ...(activeBooking.addons && activeBooking.addons.length > 0
         ? [`✨ *Add-ons:* ${activeBooking.addons.join(", ")}`]
         : []),
@@ -188,7 +188,7 @@ export default function BookingDetailsModal() {
       `🛠️ *Service:* ${formatService(activeBooking.serviceType)}`,
       ...(activeBooking.flightNumber ? [`✈️ *Flight No:* ${activeBooking.flightNumber}`] : []),
       `👥 *Pax:* ${activeBooking.passengers || 1} | 🧳 *Bags:* ${activeBooking.luggageBags ?? activeBooking.luggage ?? 0}`,
-      ...(activeBooking.meetAndGreet ? [`🤝 *Meet & Greet:* Yes`] : []),
+      ...(activeBooking.meetAndGreet ? [`🤝 *Arrival Driveway Pickup:* Yes`] : []),
       ...(activeBooking.addons && activeBooking.addons.length > 0
         ? [`✨ *Add-ons:* ${activeBooking.addons.join(", ")}`]
         : []),
@@ -509,7 +509,7 @@ export default function BookingDetailsModal() {
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5 text-color-input-placeholder text-[11px]">
                     <Sparkles className="size-3.5 text-color-input-placeholder" />
-                    <span>Meet & Greet</span>
+                    <span>Arrival Driveway Pickup</span>
                   </div>
                   <div className="text-xs font-semibold text-color-text-primary mt-1">
                     {activeBooking.meetAndGreet ? "Yes (included)" : "No"}

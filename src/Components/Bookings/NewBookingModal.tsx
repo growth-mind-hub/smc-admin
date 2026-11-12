@@ -33,7 +33,7 @@ const SERVICES_CATALOG = [
   {
     id: 2,
     code: "arrival",
-    name: "Airport Arrival (Meet & Greet)",
+    name: "Airport Arrival (Arrival Driveway Pickup)",
     desc: "Includes flight monitoring and paging board welcome",
     isHourly: false,
   },

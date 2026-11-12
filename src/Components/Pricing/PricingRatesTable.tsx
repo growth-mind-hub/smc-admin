@@ -17,7 +17,7 @@ export default function PricingRatesTable() {
               <th className="px-5 py-3.5">Vehicle</th>
               <th className="px-5 py-3.5">Capacity</th>
               <th className="px-5 py-3.5">Base Fare</th>
-              <th className="px-5 py-3.5">Meet & Greet</th>
+              <th className="px-5 py-3.5">Arrival Driveway Pickup</th>
               <th className="px-5 py-3.5">3-Hour Charter</th>
               <th className="px-5 py-3.5">8-Hour Charter</th>
             </tr>
@@ -84,7 +84,7 @@ export default function PricingRatesTable() {
                     </div>
                   </td>
 
-                  {/* Meet & Greet Input */}
+                  {/* Arrival Driveway Pickup Input */}
                   <td className="px-5 py-4">
                     <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                       <span className="text-[#C6A45A] font-semibold">$</span>

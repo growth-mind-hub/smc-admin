@@ -282,12 +282,12 @@ export default function PricingPage() {
               <div className="p-4 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start">
                 <div className="self-stretch flex flex-col justify-start items-start">
                   <div className="justify-start text-color-text-primary text-xs font-bold font-['Manrope'] leading-5">
-                    Meet & Greet
+                    Arrival Driveway Pickup
                   </div>
                 </div>
                 <div className="w-full pt-0.5 flex flex-col justify-start items-start">
                   <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                    Airport meet & greet inclusive (SGD)
+                    Airport arrival driveway pickup inclusive (SGD)
                   </div>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export default function PricingPage() {
                       <th className="px-5 py-3.5 w-[280px] max-w-[280px]">Vehicle</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">Capacity</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">Base Fare</th>
-                      <th className="px-5 py-3.5 whitespace-nowrap">Meet & Greet</th>
+                      <th className="px-5 py-3.5 whitespace-nowrap">Arrival Driveway Pickup</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">3-Hour Charter</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">8-Hour Charter</th>
                     </tr>
@@ -397,7 +397,7 @@ export default function PricingPage() {
                             </div>
                           </td>
 
-                          {/* Meet & Greet */}
+                          {/* Arrival Driveway Pickup */}
                           <td className="px-5 py-4">
                             <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
                               <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
@@ -713,7 +713,7 @@ export default function PricingPage() {
             <div className="self-stretch relative flex flex-col justify-start items-start">
               <div className="self-stretch flex flex-col justify-start items-start">
                 <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                  Meet & Greet pricing applies to airport arrivals with name board service at Changi.
+                  Arrival Driveway Pickup pricing applies to airport arrival driveway pickups at Changi.
                 </div>
               </div>
               <div className="w-3 h-4 left-[-17px] top-0 absolute inline-flex justify-end items-center">

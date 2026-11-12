@@ -176,7 +176,7 @@ export default function FleetCard({ vehicle }: FleetCardProps) {
 
           <div className="px-2.5 py-1.5 bg-stone-100 rounded-lg inline-flex justify-between items-center">
             <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-              Meet & Greet
+              Arrival Driveway Pickup
             </div>
             <div className="justify-start text-orange-400 text-xs font-semibold font-['Manrope'] leading-4">
               ${vehicle.prices?.arrival?.amount || vehicle.baseRate + 10}

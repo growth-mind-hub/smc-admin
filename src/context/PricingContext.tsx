@@ -210,7 +210,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
             status: "active",
           });
 
-          // Update Arrival (Meet & Greet)
+          // Update Arrival (Arrival Driveway Pickup)
           await setVehicleServiceRate(numId, "arrival", {
             amount: rate.meetAndGreet,
             currency: "SGD",
