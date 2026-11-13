@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("AdminSMVishnu@69");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,11 +18,6 @@ export default function LoginPage() {
     if (!success) {
       setError("Please enter valid admin credentials.");
     }
-  };
-
-  const handleUseDemo = () => {
-    setUsername("admin");
-    setPassword("AdminSMVishnu@69");
   };
 
   return (
@@ -154,7 +149,7 @@ export default function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="Enter your username"
                   className="flex-1 text-color-text-primary text-sm font-normal font-['Manrope'] outline-none bg-transparent"
                 />
               </div>
@@ -203,37 +198,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Demo Credentials Box */}
-          <div className="self-stretch pt-6 flex flex-col justify-start items-start">
-            <div
-              onClick={handleUseDemo}
-              className="self-stretch p-4 bg-color-background-selected rounded-xl outline outline-1 outline-offset-[-1px] outline-orange-400/20 flex flex-col justify-start items-start cursor-pointer hover:outline-orange-400/50 transition-all"
-              title="Click to autofill demo credentials"
-            >
-              <div className="justify-start text-orange-400 text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                Demo Credentials
-              </div>
-              <div className="self-stretch pt-2 flex flex-col justify-start items-start gap-1">
-                <div className="self-stretch flex justify-between items-center text-xs">
-                  <span className="text-color-input-placeholder font-normal font-['Manrope'] leading-4">
-                    Username
-                  </span>
-                  <span className="text-color-text-primary font-medium font-['Manrope'] leading-4">
-                    admin
-                  </span>
-                </div>
-                <div className="self-stretch flex justify-between items-center text-xs">
-                  <span className="text-color-input-placeholder font-normal font-['Manrope'] leading-4">
-                    Password
-                  </span>
-                  <span className="text-color-text-primary font-medium font-['Manrope'] leading-4">
-                    AdminSMVishnu@69
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Footer Back Link */}
           <div className="self-stretch pt-6 text-center">
