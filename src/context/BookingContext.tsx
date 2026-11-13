@@ -206,7 +206,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       const rawList: any[] =
         (res && Array.isArray(res.bookings) && res.bookings) ||
         (res && Array.isArray(res.data) && res.data) ||
-        (res && res.data && Array.isArray(res.data.bookings) && res.data.bookings) ||
+        (res && res.data && !Array.isArray(res.data) && Array.isArray(res.data.bookings) && res.data.bookings) ||
         (Array.isArray(res) && res) ||
         [];
 

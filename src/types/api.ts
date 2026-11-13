@@ -55,6 +55,7 @@ export interface VehiclesResponse {
     luggage: number;
   } | null;
   data: ApiVehicle[];
+  vehicles?: ApiVehicle[];
 }
 
 export interface SingleVehicleResponse {
@@ -300,6 +301,7 @@ export interface ApiBackendBooking {
 
 export interface BookingsListResponse {
   bookings: ApiBackendBooking[];
+  data?: ApiBackendBooking[] | { bookings: ApiBackendBooking[] };
 }
 
 export interface AdminUpdateBookingPayload {
