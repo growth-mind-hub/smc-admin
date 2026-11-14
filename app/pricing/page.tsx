@@ -140,6 +140,7 @@ export default function PricingPage() {
 
           {activeTab === "vehicle_rates" && (
             <button
+              data-tour="pricing-save-btn"
               type="button"
               onClick={saveAllChanges}
               disabled={saveStatus === "saving"}
@@ -265,7 +266,7 @@ export default function PricingPage() {
         {activeTab === "vehicle_rates" && (
           <>
             {/* 5 Overview Definition Cards from PricingPage.html */}
-            <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div data-tour="pricing-cards" className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="p-4 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start">
                 <div className="self-stretch flex flex-col justify-start items-start">
                   <div className="justify-start text-color-text-primary text-xs font-bold font-['Manrope'] leading-5">
@@ -333,7 +334,7 @@ export default function PricingPage() {
             </div>
 
             {/* Pricing Rates Table */}
-            <div className="w-full bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex flex-col justify-start items-start overflow-hidden">
+            <div data-tour="pricing-table" className="w-full bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex flex-col justify-start items-start overflow-hidden">
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[860px]">
                   <thead>

@@ -43,6 +43,7 @@ export default function FleetPage() {
           </div>
 
           <button
+            data-tour="fleet-add-btn"
             type="button"
             onClick={openAddVehicleModal}
             className="px-4 py-2.5 bg-color-background-accent rounded-lg flex justify-start items-center gap-2 hover:brightness-105 transition-all cursor-pointer shadow-xs"
@@ -55,7 +56,7 @@ export default function FleetPage() {
         </div>
 
         {/* Filter Pills */}
-        <div className="self-stretch flex items-center gap-2 border-b border-color-border-subtle pb-3">
+        <div data-tour="fleet-filters" className="self-stretch flex items-center gap-2 border-b border-color-border-subtle pb-3">
           <button
             type="button"
             onClick={() => setStatusFilter("all")}
@@ -103,7 +104,7 @@ export default function FleetPage() {
             No vehicles match the selected status filter.
           </div>
         ) : (
-          <div className="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+          <div data-tour="fleet-cards" className="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
             {displayedVehicles.map((vehicle) => (
               <FleetCard key={vehicle.id} vehicle={vehicle} />
             ))}

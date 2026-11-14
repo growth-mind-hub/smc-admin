@@ -37,10 +37,12 @@ export default function DashboardPage() {
     <AdminLayout>
       <div className="w-full flex flex-col justify-start items-start gap-6 font-['Manrope']">
         {/* Top Hero Banner */}
-        <HeroBanner />
+        <div data-tour="dashboard-hero" className="w-full">
+          <HeroBanner />
+        </div>
 
         {/* 4 Stats Cards matching dashboard.html & Screenshot 2 */}
-        <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="dashboard-metrics" className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Bookings */}
           <div className="p-5 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start gap-3">
             <div className="self-stretch inline-flex justify-between items-center">
@@ -185,7 +187,7 @@ export default function DashboardPage() {
         {/* Two Columns Layout: Recent Bookings (Left, expands to fill widescreen) & Status Breakdown + Quick Actions (Right) */}
         <div className="self-stretch flex flex-col lg:flex-row gap-6 items-start">
           {/* Left Column: Recent Bookings (Fills available space) */}
-          <div className="flex-1 w-full min-w-0">
+          <div data-tour="dashboard-schedule" className="flex-1 w-full min-w-0">
             <RecentBookingsTable />
           </div>
 
