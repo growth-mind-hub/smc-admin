@@ -8,6 +8,7 @@ export interface VehiclePricingRate {
   capacityText: string;
   baseFare: number;
   meetAndGreet: number;
+  hourlyRate: number;
   charter3h: number;
   charter8h: number;
 }

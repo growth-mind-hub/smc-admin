@@ -108,11 +108,11 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
             const meetAndGreet =
               v.prices?.arrival?.amount ||
               baseFare + 10;
-            const charter3h =
-              v.prices?.hourly?.amount ? v.prices.hourly.amount * 3 - 15 : 180;
-            const charter8h =
-              v.prices?.hourly?.eightHourAmount ??
-              (v.prices?.hourly?.amount ? v.prices.hourly.amount * 8 : 480);
+            const hourlyRate =
+              v.prices?.hourly?.amount ||
+              (v.prices?.hourly?.eightHourAmount ? Math.round(v.prices.hourly.eightHourAmount / 8) : 60);
+            const charter3h = hourlyRate * 3;
+            const charter8h = hourlyRate * 8;
 
             const pax = v.passengerCapacity ? `${v.passengerCapacity} Passengers` : "6 Passengers";
             const luggage = v.luggageCapacity ? `${v.luggageCapacity} Luggage` : "4 Luggage";
@@ -125,6 +125,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
               capacityText: `${pax} · ${luggage}`,
               baseFare,
               meetAndGreet,
+              hourlyRate,
               charter3h,
               charter8h,
             };
@@ -189,7 +190,18 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
     value: number
   ) => {
     setRates((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        if (field === "hourlyRate") {
+          return {
+            ...r,
+            hourlyRate: value,
+            charter3h: value * 3,
+            charter8h: value * 8,
+          };
+        }
+        return { ...r, [field]: value };
+      })
     );
   };
 
@@ -218,10 +230,10 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
           });
 
           // Update Hourly
-          const hourlyAmount = Math.round(rate.charter8h / 8) || 65;
+          const hourlyAmount = rate.hourlyRate || Math.round(rate.charter8h / 8) || 60;
           await setVehicleServiceRate(numId, "hourly", {
             amount: hourlyAmount,
-            eightHourAmount: rate.charter8h,
+            eightHourAmount: hourlyAmount * 8,
             currency: "SGD",
             minimumHours: 3,
             status: "active",

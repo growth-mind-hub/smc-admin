@@ -18,6 +18,7 @@ export default function PricingRatesTable() {
               <th className="px-5 py-3.5">Capacity</th>
               <th className="px-5 py-3.5">Base Fare</th>
               <th className="px-5 py-3.5">Arrival Driveway Pickup</th>
+              <th className="px-5 py-3.5">1-Hour Charter</th>
               <th className="px-5 py-3.5">3-Hour Charter</th>
               <th className="px-5 py-3.5">8-Hour Charter</th>
             </tr>
@@ -45,11 +46,14 @@ export default function PricingRatesTable() {
                   <td className="px-5 py-4">
                     <div className="h-8 w-20 bg-slate-100 rounded-md" />
                   </td>
+                  <td className="px-5 py-4">
+                    <div className="h-8 w-20 bg-slate-100 rounded-md" />
+                  </td>
                 </tr>
               ))
             ) : rates.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                   No vehicle pricing rates found.
                 </td>
               </tr>
@@ -96,26 +100,49 @@ export default function PricingRatesTable() {
                     </div>
                   </td>
 
-                  {/* 3-Hour Charter Input */}
+                  {/* 1-Hour Charter Input */}
                   <td className="px-5 py-4">
                     <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                       <span className="text-[#C6A45A] font-semibold">$</span>
                       <NumericInput
-                        value={rate.charter3h}
-                        onChange={(val) => updateRate(rate.id, "charter3h", val)}
-                        className="w-14 text-center text-[#C6A45A] font-semibold text-sm bg-transparent outline-none"
+                        value={rate.hourlyRate}
+                        onChange={(val) => updateRate(rate.id, "hourlyRate", val)}
+                        className="w-12 text-center text-[#C6A45A] font-semibold text-sm bg-transparent outline-none"
+                        title="1-Hour Charter (hourly base rate)"
                       />
                     </div>
                   </td>
 
-                  {/* 8-Hour Charter Input */}
+                  {/* 3-Hour Charter Input (Auto-calculated, cursor not allowed) */}
                   <td className="px-5 py-4">
-                    <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
-                      <span className="text-[#C6A45A] font-semibold">$</span>
+                    <div
+                      title="Auto-calculated (1-Hour Charter × 3)"
+                      className="inline-flex items-center gap-1 bg-slate-100/90 border border-slate-200 rounded-md px-2 py-1 cursor-not-allowed select-none opacity-80"
+                    >
+                      <span className="text-slate-400 font-semibold">$</span>
                       <NumericInput
+                        disabled
+                        value={rate.charter3h}
+                        onChange={() => {}}
+                        className="w-14 text-center text-slate-500 font-semibold text-sm bg-transparent outline-none cursor-not-allowed select-none"
+                        title="Auto-calculated (1-Hour Charter × 3)"
+                      />
+                    </div>
+                  </td>
+
+                  {/* 8-Hour Charter Input (Auto-calculated, cursor not allowed) */}
+                  <td className="px-5 py-4">
+                    <div
+                      title="Auto-calculated (1-Hour Charter × 8)"
+                      className="inline-flex items-center gap-1 bg-slate-100/90 border border-slate-200 rounded-md px-2 py-1 cursor-not-allowed select-none opacity-80"
+                    >
+                      <span className="text-slate-400 font-semibold">$</span>
+                      <NumericInput
+                        disabled
                         value={rate.charter8h}
-                        onChange={(val) => updateRate(rate.id, "charter8h", val)}
-                        className="w-14 text-center text-[#C6A45A] font-semibold text-sm bg-transparent outline-none"
+                        onChange={() => {}}
+                        className="w-14 text-center text-slate-500 font-semibold text-sm bg-transparent outline-none cursor-not-allowed select-none"
+                        title="Auto-calculated (1-Hour Charter × 8)"
                       />
                     </div>
                   </td>

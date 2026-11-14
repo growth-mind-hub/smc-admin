@@ -35,6 +35,7 @@ export default function EditVehicleModal() {
   const [luggageCapacity, setLuggageCapacity] = useState(5);
   const [baseFare, setBaseFare] = useState(65);
   const [meetAndGreet, setMeetAndGreet] = useState(75);
+  const [hourlyRate, setHourlyRate] = useState(60);
   const [charter3h, setCharter3h] = useState(180);
   const [charter8h, setCharter8h] = useState(480);
   const [isActive, setIsActive] = useState(true);
@@ -55,11 +56,13 @@ export default function EditVehicleModal() {
       setPaxCapacity(editingVehicle.paxCapacity);
       setLuggageCapacity(editingVehicle.luggageCapacity);
       setBaseFare(editingVehicle.baseRate);
-      setMeetAndGreet(editingVehicle.baseRate + 10);
-      setCharter3h(editingVehicle.baseRate * 3 - 15);
+      setMeetAndGreet(editingVehicle.meetAndGreet ?? (editingVehicle.baseRate + 10));
+      const hr = editingVehicle.hourlyRate || editingVehicle.prices?.hourly?.amount || 60;
+      setHourlyRate(hr);
+      setCharter3h(hr * 3);
       const pkg8h =
         editingVehicle.prices?.hourly?.eightHourAmount ??
-        (editingVehicle.hourlyRate * 8);
+        (hr * 8);
       setCharter8h(pkg8h);
       setIsActive(editingVehicle.status === "active");
     }
@@ -224,7 +227,7 @@ export default function EditVehicleModal() {
         baseRate: Number(baseFare),
         meetAndGreet: Number(meetAndGreet),
         charter8h: Number(charter8h),
-        hourlyRate: Math.round(Number(charter8h) / 8),
+        hourlyRate: Number(hourlyRate),
         status: (isActive ? "active" : "inactive") as VehicleStatus,
       });
 
@@ -560,26 +563,61 @@ export default function EditVehicleModal() {
 
               <div className="flex flex-col justify-start items-start gap-1">
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  3-Hour Charter ($)
+                  1-Hour Charter ($)
                 </div>
                 <NumericInput
-                  min={0}
-                  value={charter3h}
-                  onChange={setCharter3h}
+                  min={1}
+                  value={hourlyRate}
+                  onChange={(val) => {
+                    setHourlyRate(val);
+                    setCharter3h(val * 3);
+                    setCharter8h(val * 8);
+                    if (submitError) setSubmitError(null);
+                  }}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>
 
               <div className="flex flex-col justify-start items-start gap-1">
-                <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  8-Hour Charter ($)
+                <div className="flex items-center justify-between w-full">
+                  <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
+                    3-Hour Charter ($)
+                  </div>
+                  <span className="text-[10px] text-stone-400 font-medium">Auto (1hr × 3)</span>
                 </div>
-                <NumericInput
-                  min={0}
-                  value={charter8h}
-                  onChange={setCharter8h}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
-                />
+                <div
+                  title="Auto-calculated from 1-Hour Charter (× 3)"
+                  className="self-stretch h-10 px-3 py-2.5 rounded-lg bg-stone-200/60 outline outline-1 outline-offset-[-1px] outline-stone-300 flex items-center cursor-not-allowed select-none opacity-80"
+                >
+                  <NumericInput
+                    disabled
+                    value={charter3h}
+                    onChange={() => {}}
+                    className="w-full text-xs text-stone-600 font-medium font-['Manrope'] bg-transparent outline-none cursor-not-allowed select-none"
+                    title="Auto-calculated from 1-Hour Charter (× 3)"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-start items-start gap-1">
+                <div className="flex items-center justify-between w-full">
+                  <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
+                    8-Hour Charter ($)
+                  </div>
+                  <span className="text-[10px] text-stone-400 font-medium">Auto (1hr × 8)</span>
+                </div>
+                <div
+                  title="Auto-calculated from 1-Hour Charter (× 8)"
+                  className="self-stretch h-10 px-3 py-2.5 rounded-lg bg-stone-200/60 outline outline-1 outline-offset-[-1px] outline-stone-300 flex items-center cursor-not-allowed select-none opacity-80"
+                >
+                  <NumericInput
+                    disabled
+                    value={charter8h}
+                    onChange={() => {}}
+                    className="w-full text-xs text-stone-600 font-medium font-['Manrope'] bg-transparent outline-none cursor-not-allowed select-none"
+                    title="Auto-calculated from 1-Hour Charter (× 8)"
+                  />
+                </div>
               </div>
             </div>
           </div>

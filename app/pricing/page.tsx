@@ -264,8 +264,8 @@ export default function PricingPage() {
         {/* TAB 1: Vehicle Rates */}
         {activeTab === "vehicle_rates" && (
           <>
-            {/* 4 Overview Definition Cards from PricingPage.html */}
-            <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 5 Overview Definition Cards from PricingPage.html */}
+            <div className="self-stretch grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="p-4 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start">
                 <div className="self-stretch flex flex-col justify-start items-start">
                   <div className="justify-start text-color-text-primary text-xs font-bold font-['Manrope'] leading-5">
@@ -295,12 +295,25 @@ export default function PricingPage() {
               <div className="p-4 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start">
                 <div className="self-stretch flex flex-col justify-start items-start">
                   <div className="justify-start text-color-text-primary text-xs font-bold font-['Manrope'] leading-5">
+                    1-Hour Charter
+                  </div>
+                </div>
+                <div className="w-full pt-0.5 flex flex-col justify-start items-start">
+                  <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
+                    Base hourly charter rate (SGD)
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle inline-flex flex-col justify-start items-start">
+                <div className="self-stretch flex flex-col justify-start items-start">
+                  <div className="justify-start text-color-text-primary text-xs font-bold font-['Manrope'] leading-5">
                     3-Hour Charter
                   </div>
                 </div>
                 <div className="w-full pt-0.5 flex flex-col justify-start items-start">
                   <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                    Hourly charter, 3-hour package (SGD)
+                    Auto-calculated: 1hr × 3 (SGD)
                   </div>
                 </div>
               </div>
@@ -313,7 +326,7 @@ export default function PricingPage() {
                 </div>
                 <div className="w-full pt-0.5 flex flex-col justify-start items-start">
                   <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                    Full-day charter, 8-hour package (SGD)
+                    Auto-calculated: 1hr × 8 (SGD)
                   </div>
                 </div>
               </div>
@@ -322,13 +335,14 @@ export default function PricingPage() {
             {/* Pricing Rates Table */}
             <div className="w-full bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex flex-col justify-start items-start overflow-hidden">
               <div className="w-full overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-left border-collapse min-w-[860px]">
                   <thead>
                     <tr className="bg-stone-100 border-b border-color-border-subtle text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase tracking-wide">
-                      <th className="px-5 py-3.5 w-[280px] max-w-[280px]">Vehicle</th>
+                      <th className="px-5 py-3.5 w-[260px] max-w-[260px]">Vehicle</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">Capacity</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">Base Fare</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">Arrival Driveway Pickup</th>
+                      <th className="px-5 py-3.5 whitespace-nowrap">1-Hour Charter</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">3-Hour Charter</th>
                       <th className="px-5 py-3.5 whitespace-nowrap">8-Hour Charter</th>
                     </tr>
@@ -337,12 +351,15 @@ export default function PricingPage() {
                     {isLoading ? (
                       [...Array(6)].map((_, idx) => (
                         <tr key={idx} className="animate-pulse">
-                          <td className="px-5 py-4 w-[280px] max-w-[280px]">
+                          <td className="px-5 py-4 w-[260px] max-w-[260px]">
                             <div className="h-4 w-44 bg-stone-200 rounded mb-1.5" />
                             <div className="h-3 w-28 bg-stone-100 rounded" />
                           </td>
                           <td className="px-5 py-4 whitespace-nowrap">
                             <div className="h-3.5 w-24 bg-stone-100 rounded" />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="h-9 w-20 bg-stone-100 rounded-md" />
                           </td>
                           <td className="px-5 py-4">
                             <div className="h-9 w-20 bg-stone-100 rounded-md" />
@@ -365,8 +382,8 @@ export default function PricingPage() {
                           className="hover:bg-stone-50/60 transition-colors"
                         >
                           {/* Vehicle */}
-                          <td className="px-5 py-4 w-[280px] max-w-[280px]">
-                            <div className="flex flex-col justify-start items-start max-w-[280px]">
+                          <td className="px-5 py-4 w-[260px] max-w-[260px]">
+                            <div className="flex flex-col justify-start items-start max-w-[260px]">
                               <div className="justify-start text-color-text-primary text-xs font-semibold font-['Manrope'] leading-5">
                                 {rate.name}
                               </div>
@@ -411,30 +428,55 @@ export default function PricingPage() {
                             </div>
                           </td>
 
-                          {/* 3-Hour Charter */}
+                          {/* 1-Hour Charter (Editable) */}
                           <td className="px-5 py-4">
                             <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
                               <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
                                 $
                               </span>
                               <NumericInput
-                                value={rate.charter3h}
-                                onChange={(val) => updateRate(rate.id, "charter3h", val)}
+                                value={rate.hourlyRate}
+                                onChange={(val) => updateRate(rate.id, "hourlyRate", val)}
                                 className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                                title="1-Hour Charter (hourly base rate)"
                               />
                             </div>
                           </td>
 
-                          {/* 8-Hour Charter */}
+                          {/* 3-Hour Charter (Auto-calculated, cursor not allowed) */}
                           <td className="px-5 py-4">
-                            <div className="inline-flex items-center gap-1 bg-stone-50 hover:bg-white border border-color-border-subtle rounded-md px-2.5 py-1.5 focus-within:ring-1 focus-within:ring-amber-500">
-                              <span className="text-orange-400 font-semibold text-sm font-['Manrope']">
+                            <div
+                              title="Auto-calculated (1-Hour Charter × 3)"
+                              className="inline-flex items-center gap-1 bg-stone-100/80 border border-stone-200 rounded-md px-2.5 py-1.5 cursor-not-allowed select-none opacity-80"
+                            >
+                              <span className="text-stone-400 font-semibold text-sm font-['Manrope']">
                                 $
                               </span>
                               <NumericInput
+                                disabled
+                                value={rate.charter3h}
+                                onChange={() => {}}
+                                className="w-16 text-center text-stone-500 font-semibold text-sm font-['Manrope'] bg-transparent outline-none cursor-not-allowed select-none"
+                                title="Auto-calculated (1-Hour Charter × 3)"
+                              />
+                            </div>
+                          </td>
+
+                          {/* 8-Hour Charter (Auto-calculated, cursor not allowed) */}
+                          <td className="px-5 py-4">
+                            <div
+                              title="Auto-calculated (1-Hour Charter × 8)"
+                              className="inline-flex items-center gap-1 bg-stone-100/80 border border-stone-200 rounded-md px-2.5 py-1.5 cursor-not-allowed select-none opacity-80"
+                            >
+                              <span className="text-stone-400 font-semibold text-sm font-['Manrope']">
+                                $
+                              </span>
+                              <NumericInput
+                                disabled
                                 value={rate.charter8h}
-                                onChange={(val) => updateRate(rate.id, "charter8h", val)}
-                                className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
+                                onChange={() => {}}
+                                className="w-16 text-center text-stone-500 font-semibold text-sm font-['Manrope'] bg-transparent outline-none cursor-not-allowed select-none"
+                                title="Auto-calculated (1-Hour Charter × 8)"
                               />
                             </div>
                           </td>

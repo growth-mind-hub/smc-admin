@@ -28,9 +28,9 @@ export default function FleetCard({ vehicle }: FleetCardProps) {
     );
   };
 
-  const charter3h = vehicle.baseRate * 3 - 15;
+  const charter3h = (vehicle.hourlyRate || 60) * 3;
   const charter8h =
-    vehicle.prices?.hourly?.eightHourAmount ?? (vehicle.hourlyRate * 8);
+    vehicle.prices?.hourly?.eightHourAmount ?? ((vehicle.hourlyRate || 60) * 8);
 
   return (
     <div className="bg-color-background-white rounded-xl outline outline-1 outline-offset-[-1px] outline-color-border-subtle flex flex-col justify-start items-start overflow-hidden font-['Manrope']">
