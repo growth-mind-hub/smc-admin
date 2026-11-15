@@ -7,7 +7,8 @@ export interface VehiclePricingRate {
   model: string;
   capacityText: string;
   baseFare: number;
-  meetAndGreet: number;
+  arrivalDriveway: number;
+  meetAndGreet?: number;
   hourlyRate: number;
   charter3h: number;
   charter8h: number;

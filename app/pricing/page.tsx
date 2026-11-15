@@ -421,8 +421,11 @@ export default function PricingPage() {
                                 $
                               </span>
                               <NumericInput
-                                value={rate.meetAndGreet}
-                                onChange={(val) => updateRate(rate.id, "meetAndGreet", val)}
+                                value={rate.arrivalDriveway ?? rate.meetAndGreet ?? 75}
+                                onChange={(val) => {
+                                  updateRate(rate.id, "arrivalDriveway", val);
+                                  updateRate(rate.id, "meetAndGreet", val);
+                                }}
                                 className="w-16 text-center text-orange-400 font-semibold text-sm font-['Manrope'] bg-transparent outline-none"
                               />
                             </div>
@@ -542,6 +545,13 @@ export default function PricingPage() {
                           ? localAddOnPrices[addon.id]
                           : addon.price;
                       const isSaving = savingItem === `addon-${addon.id}`;
+                      const isMeetGreet =
+                        addon.code === "MEET_GREET" ||
+                        (addon.code || "").toUpperCase().includes("MEET") ||
+                        (addon.name || "").toLowerCase().includes("driveway");
+                      const displayName = isMeetGreet
+                        ? "Meet & Greet (Paging Signboard)"
+                        : addon.name;
 
                       return (
                         <tr key={addon.id} className="hover:bg-stone-50/60 transition-colors">
@@ -549,7 +559,12 @@ export default function PricingPage() {
                             {addon.code}
                           </td>
                           <td className="px-5 py-4 font-semibold text-color-text-primary">
-                            {addon.name}
+                            <div>{displayName}</div>
+                            {isMeetGreet && (
+                              <div className="text-[11px] text-slate-400 font-normal">
+                                Airport arrival paging signboard welcome inside terminal
+                              </div>
+                            )}
                           </td>
                           <td className="px-5 py-4">
                             <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[11px] font-medium">
@@ -755,7 +770,7 @@ export default function PricingPage() {
             <div className="self-stretch relative flex flex-col justify-start items-start">
               <div className="self-stretch flex flex-col justify-start items-start">
                 <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
-                  Arrival Driveway Pickup pricing applies to airport arrival driveway pickups at Changi.
+                  Arrival Driveway Pickup applies to curbside airport pickup per fleet category at Changi Airport. Meet &amp; Greet with personalized signboard welcome inside the arrival hall is configured under Add-Ons &amp; Extras.
                 </div>
               </div>
               <div className="w-3 h-4 left-[-17px] top-0 absolute inline-flex justify-end items-center">

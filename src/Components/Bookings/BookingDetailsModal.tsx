@@ -91,9 +91,13 @@ export default function BookingDetailsModal() {
     if (!type) return "Transfer";
     const map: Record<string, string> = {
       airport_transfer: "Airport Transfer",
+      airport_arrival: "Airport Arrival (Driveway Pickup)",
+      arrival: "Airport Arrival (Driveway Pickup)",
       airport_departure: "Airport Departure",
+      departure_transfer: "Point-to-Point / Departure",
       city_transfer: "Point-to-Point Transfer",
       hourly_charter: "Hourly Charter",
+      hourly: "Hourly Charter",
       special_occasions: "Special Occasions",
       corporate: "Corporate Transfer",
     };
@@ -139,7 +143,7 @@ export default function BookingDetailsModal() {
       ``,
       `👥 *Passengers:* ${activeBooking.passengers || 1} pax`,
       `🧳 *Luggage:* ${activeBooking.luggageBags ?? activeBooking.luggage ?? 0} bags`,
-      ...(activeBooking.meetAndGreet ? [`🤝 *Arrival Driveway Pickup:* Yes (Included)`] : []),
+      ...(activeBooking.meetAndGreet ? [`🤝 *Meet & Greet (Paging Board):* Yes (Included)`] : []),
       ...(activeBooking.addons && activeBooking.addons.length > 0
         ? [`✨ *Add-ons:* ${activeBooking.addons.join(", ")}`]
         : []),
@@ -188,7 +192,7 @@ export default function BookingDetailsModal() {
       `🛠️ *Service:* ${formatService(activeBooking.serviceType)}`,
       ...(activeBooking.flightNumber ? [`✈️ *Flight No:* ${activeBooking.flightNumber}`] : []),
       `👥 *Pax:* ${activeBooking.passengers || 1} | 🧳 *Bags:* ${activeBooking.luggageBags ?? activeBooking.luggage ?? 0}`,
-      ...(activeBooking.meetAndGreet ? [`🤝 *Arrival Driveway Pickup:* Yes`] : []),
+      ...(activeBooking.meetAndGreet ? [`🤝 *Meet & Greet (Paging Board):* Yes`] : []),
       ...(activeBooking.addons && activeBooking.addons.length > 0
         ? [`✨ *Add-ons:* ${activeBooking.addons.join(", ")}`]
         : []),
@@ -509,10 +513,10 @@ export default function BookingDetailsModal() {
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5 text-color-input-placeholder text-[11px]">
                     <Sparkles className="size-3.5 text-color-input-placeholder" />
-                    <span>Arrival Driveway Pickup</span>
+                    <span>Meet & Greet</span>
                   </div>
                   <div className="text-xs font-semibold text-color-text-primary mt-1">
-                    {activeBooking.meetAndGreet ? "Yes (included)" : "No"}
+                    {activeBooking.meetAndGreet ? "Yes (Paging Board)" : "No"}
                   </div>
                 </div>
 
@@ -543,7 +547,13 @@ export default function BookingDetailsModal() {
                 <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/60 flex items-center justify-between text-xs">
                   <span className="font-semibold text-blue-900">Add-ons:</span>
                   <span className="text-blue-800 font-medium">
-                    {activeBooking.addons.join(", ")}
+                    {activeBooking.addons
+                      .map((addon) =>
+                        addon.toLowerCase().includes("driveway")
+                          ? "Meet & Greet (Paging Board)"
+                          : addon
+                      )
+                      .join(", ")}
                   </span>
                 </div>
               )}

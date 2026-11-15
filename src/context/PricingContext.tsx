@@ -105,7 +105,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
               v.prices?.departure_transfer?.amount ||
               v.prices?.arrival?.amount ||
               65;
-            const meetAndGreet =
+            const arrivalDriveway =
               v.prices?.arrival?.amount ||
               baseFare + 10;
             const hourlyRate =
@@ -124,7 +124,8 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
               model: v.description || v.vehicleType || "Executive Maxi Cab",
               capacityText: `${pax} · ${luggage}`,
               baseFare,
-              meetAndGreet,
+              arrivalDriveway,
+              meetAndGreet: arrivalDriveway,
               hourlyRate,
               charter3h,
               charter8h,
@@ -137,7 +138,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         setRates((prev) => prev);
       }
 
-      // 2. Fetch add-ons (deduplicated by client)
+      // 2. Fetch add-ons (deduplicated and sanitized)
       try {
         const aRes = await getAddOns();
         const aList: any[] =
@@ -145,7 +146,43 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
           (Array.isArray(aRes) && aRes) ||
           [];
         if (aList && aList.length >= 0) {
-          setAddOns(aList);
+          // Normalize any misnamed backend records:
+          // Arrival Driveway is a fleet vehicle rate, whereas Meet & Greet is the arrival welcome add-on!
+          const normalizedAddOns: ApiAddOn[] = aList.map((addon) => {
+            const isMeetGreet =
+              addon.code === "MEET_GREET" ||
+              (addon.code || "").toUpperCase().includes("MEET") ||
+              (addon.name || "").toLowerCase().includes("driveway");
+
+            if (isMeetGreet) {
+              return {
+                ...addon,
+                code: "MEET_GREET",
+                name: "Meet & Greet (Paging Signboard)",
+                description:
+                  addon.description ||
+                  "Personal chauffeur arrival welcome inside terminal hall with name signboard",
+              };
+            }
+            return addon;
+          });
+
+          setAddOns(normalizedAddOns);
+
+          // If the backend record was misnamed "Arrival Driveway Pickup", heal it in the database
+          const misnamedBackendItem = aList.find(
+            (a) =>
+              (a.code === "MEET_GREET" || (a.code || "").toUpperCase().includes("MEET")) &&
+              (a.name || "").toLowerCase().includes("driveway")
+          );
+          if (misnamedBackendItem) {
+            updateAddOn(misnamedBackendItem.id, {
+              name: "Meet & Greet (Paging Signboard)",
+              description: "Personal chauffeur arrival welcome inside terminal hall with name signboard",
+            }).catch(() => {
+              // Ignore background auto-heal if admin session token is not yet initialized
+            });
+          }
         }
       } catch (err) {
         console.warn("Could not load add-ons:", err);
@@ -200,6 +237,13 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
             charter8h: value * 8,
           };
         }
+        if (field === "arrivalDriveway" || field === "meetAndGreet") {
+          return {
+            ...r,
+            arrivalDriveway: value,
+            meetAndGreet: value,
+          };
+        }
         return { ...r, [field]: value };
       })
     );
@@ -223,8 +267,9 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
           });
 
           // Update Arrival (Arrival Driveway Pickup)
+          const arrivalRate = rate.arrivalDriveway ?? rate.meetAndGreet ?? 75;
           await setVehicleServiceRate(numId, "arrival", {
-            amount: rate.meetAndGreet,
+            amount: arrivalRate,
             currency: "SGD",
             status: "active",
           });
@@ -272,15 +317,25 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
     updates: AdminUpdateAddOnPayload
   ): Promise<boolean> => {
     try {
-      await updateAddOn(id, updates);
+      const cleanUpdates = { ...updates };
+      const target = addOns.find((a) => a.id === id);
+      if (
+        target?.code === "MEET_GREET" ||
+        (target?.code || "").toUpperCase().includes("MEET") ||
+        (cleanUpdates.name && cleanUpdates.name.toLowerCase().includes("driveway"))
+      ) {
+        cleanUpdates.name = "Meet & Greet (Paging Signboard)";
+      }
+      await updateAddOn(id, cleanUpdates);
       setAddOns((prev) =>
         prev.map((a) =>
           a.id === id
             ? {
                 ...a,
-                ...updates,
-                price: updates.price !== undefined ? updates.price : a.price,
-                status: updates.status || a.status,
+                ...cleanUpdates,
+                name: cleanUpdates.name || a.name,
+                price: cleanUpdates.price !== undefined ? cleanUpdates.price : a.price,
+                status: cleanUpdates.status || a.status,
               }
             : a
         )

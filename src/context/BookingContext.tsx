@@ -156,12 +156,17 @@ function mapBackendBookingToFrontend(
     luggageBags: 2,
     meetAndGreet: !!b.quote_snapshot?.add_ons?.some(
       (a: any) =>
-        (a.code || "").includes("MEET") ||
-        (a.name || "").toLowerCase().includes("meet")
+        (a.code || "").toUpperCase().includes("MEET") ||
+        (a.name || "").toLowerCase().includes("meet") ||
+        (a.name || "").toLowerCase().includes("driveway")
     ),
-    addons: (b.quote_snapshot?.add_ons || []).map(
-      (a: any) => a.name || a.code
-    ),
+    addons: (b.quote_snapshot?.add_ons || []).map((a: any) => {
+      const isMeet =
+        (a.code || "").toUpperCase().includes("MEET") ||
+        (a.name || "").toLowerCase().includes("driveway") ||
+        (a.name || "").toLowerCase().includes("meet");
+      return isMeet ? "Meet & Greet (Paging Board)" : a.name || a.code;
+    }),
     status,
     fare,
     channel,

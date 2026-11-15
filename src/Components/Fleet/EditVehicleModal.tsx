@@ -34,7 +34,7 @@ export default function EditVehicleModal() {
   const [paxCapacity, setPaxCapacity] = useState(6);
   const [luggageCapacity, setLuggageCapacity] = useState(5);
   const [baseFare, setBaseFare] = useState(65);
-  const [meetAndGreet, setMeetAndGreet] = useState(75);
+  const [arrivalDriveway, setArrivalDriveway] = useState(75);
   const [hourlyRate, setHourlyRate] = useState(60);
   const [charter3h, setCharter3h] = useState(180);
   const [charter8h, setCharter8h] = useState(480);
@@ -56,7 +56,7 @@ export default function EditVehicleModal() {
       setPaxCapacity(editingVehicle.paxCapacity);
       setLuggageCapacity(editingVehicle.luggageCapacity);
       setBaseFare(editingVehicle.baseRate);
-      setMeetAndGreet(editingVehicle.meetAndGreet ?? (editingVehicle.baseRate + 10));
+      setArrivalDriveway(editingVehicle.arrivalDriveway ?? editingVehicle.meetAndGreet ?? (editingVehicle.baseRate + 10));
       const hr = editingVehicle.hourlyRate || editingVehicle.prices?.hourly?.amount || 60;
       setHourlyRate(hr);
       setCharter3h(hr * 3);
@@ -225,7 +225,8 @@ export default function EditVehicleModal() {
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
-        meetAndGreet: Number(meetAndGreet),
+        arrivalDriveway: Number(arrivalDriveway),
+        meetAndGreet: Number(arrivalDriveway),
         charter8h: Number(charter8h),
         hourlyRate: Number(hourlyRate),
         status: (isActive ? "active" : "inactive") as VehicleStatus,
@@ -555,8 +556,8 @@ export default function EditVehicleModal() {
                 </div>
                 <NumericInput
                   min={0}
-                  value={meetAndGreet}
-                  onChange={setMeetAndGreet}
+                  value={arrivalDriveway}
+                  onChange={setArrivalDriveway}
                   className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
                 />
               </div>

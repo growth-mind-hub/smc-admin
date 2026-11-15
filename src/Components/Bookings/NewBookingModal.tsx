@@ -33,8 +33,8 @@ const SERVICES_CATALOG = [
   {
     id: 2,
     code: "arrival",
-    name: "Airport Arrival (Arrival Driveway Pickup)",
-    desc: "Includes flight monitoring and paging board welcome",
+    name: "Airport Arrival (Driveway Pickup)",
+    desc: "Terminal curb-side arrival pickup with flight monitoring (select Meet & Greet add-on below for paging board welcome)",
     isHourly: false,
   },
   {
@@ -932,6 +932,13 @@ export default function NewBookingModal() {
                     .map((addon) => {
                       const isSelected = Boolean(selectedAddons[addon.id]);
                       const qty = selectedAddons[addon.id] || 0;
+                      const isMeetGreet =
+                        addon.code === "MEET_GREET" ||
+                        (addon.code || "").toUpperCase().includes("MEET") ||
+                        (addon.name || "").toLowerCase().includes("driveway");
+                      const displayName = isMeetGreet
+                        ? "Meet & Greet (Paging Signboard)"
+                        : addon.name;
 
                       return (
                         <div
@@ -954,10 +961,11 @@ export default function NewBookingModal() {
                             />
                             <div className="flex flex-col">
                               <span className="text-xs font-semibold text-slate-900">
-                                {addon.name}
+                                {displayName}
                               </span>
                               <span className="text-[11px] text-slate-500">
                                 +${addon.price} SGD · {addon.pricing_type}
+                                {isMeetGreet ? " · Inside terminal welcome with name board" : ""}
                               </span>
                             </div>
                           </div>

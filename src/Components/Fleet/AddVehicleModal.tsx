@@ -23,7 +23,7 @@ export default function AddVehicleModal() {
   const [paxCapacity, setPaxCapacity] = useState(6);
   const [luggageCapacity, setLuggageCapacity] = useState(4);
   const [baseFare, setBaseFare] = useState(65);
-  const [meetAndGreet, setMeetAndGreet] = useState(75);
+  const [arrivalDriveway, setArrivalDriveway] = useState(75);
   const [hourlyRate, setHourlyRate] = useState(60);
   const [charter3h, setCharter3h] = useState(180);
   const [charter8h, setCharter8h] = useState(480);
@@ -136,8 +136,8 @@ export default function AddVehicleModal() {
     if (baseFare <= 0) {
       errs.baseFare = "Base fare must be at least $1 SGD";
     }
-    if (meetAndGreet < baseFare) {
-      errs.meetAndGreet = "Arrival Driveway Pickup rate should typically be equal to or greater than base fare";
+    if (arrivalDriveway < baseFare) {
+      errs.arrivalDriveway = "Arrival Driveway Pickup rate should typically be equal to or greater than base fare";
     }
     if (hourlyRate <= 0) {
       errs.hourlyRate = "1-Hour charter rate must be at least $1 SGD";
@@ -159,7 +159,7 @@ export default function AddVehicleModal() {
     paxCapacity,
     luggageCapacity,
     baseFare,
-    meetAndGreet,
+    arrivalDriveway,
     hourlyRate,
     driverPhone,
   ]);
@@ -197,6 +197,7 @@ export default function AddVehicleModal() {
       paxCapacity: true,
       luggageCapacity: true,
       baseFare: true,
+      arrivalDriveway: true,
       meetAndGreet: true,
       charter3h: true,
       charter8h: true,
@@ -224,7 +225,8 @@ export default function AddVehicleModal() {
         paxCapacity: Number(paxCapacity),
         luggageCapacity: Number(luggageCapacity),
         baseRate: Number(baseFare),
-        meetAndGreet: Number(meetAndGreet),
+        arrivalDriveway: Number(arrivalDriveway),
+        meetAndGreet: Number(arrivalDriveway),
         charter8h: Number(charter8h),
         hourlyRate: Number(hourlyRate),
         driverName: driverName.trim() || "Unassigned",
@@ -618,21 +620,21 @@ export default function AddVehicleModal() {
                 </label>
                 <NumericInput
                   min={1}
-                  value={meetAndGreet}
+                  value={arrivalDriveway}
                   onChange={(val) => {
-                    setMeetAndGreet(val);
+                    setArrivalDriveway(val);
                     if (submitError) setSubmitError(null);
                   }}
                   className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
-                    touched.meetAndGreet && validationErrors.meetAndGreet
+                    touched.arrivalDriveway && validationErrors.arrivalDriveway
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
                   }`}
                 />
-                {touched.meetAndGreet && validationErrors.meetAndGreet && (
+                {touched.arrivalDriveway && validationErrors.arrivalDriveway && (
                   <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
                     <AlertCircle className="size-3 flex-shrink-0" />
-                    <span>{validationErrors.meetAndGreet}</span>
+                    <span>{validationErrors.arrivalDriveway}</span>
                   </p>
                 )}
               </div>

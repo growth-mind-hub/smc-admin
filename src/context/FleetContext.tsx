@@ -75,6 +75,10 @@ function mapApiToVehicle(v: ApiVehicle, index: number): Vehicle {
     v.prices?.arrival?.amount ??
     65;
 
+  const arrivalDriveway =
+    v.prices?.arrival?.amount ??
+    (baseRate + 10);
+
   const hourlyRate =
     v.prices?.hourly?.amount ??
     60;
@@ -91,6 +95,8 @@ function mapApiToVehicle(v: ApiVehicle, index: number): Vehicle {
     paxCapacity: v.passengerCapacity || 6,
     luggageCapacity: v.luggageCapacity || 4,
     baseRate,
+    arrivalDriveway,
+    meetAndGreet: arrivalDriveway,
     hourlyRate,
     status: v.status === "active" || v.isActive !== false ? "active" : "inactive",
     driverName: driver.name,
@@ -199,7 +205,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
     try {
       const baseFare = data.baseRate || 65;
       const hourly = data.hourlyRate || 60;
-      const meetGreet = baseFare + 10;
+      const arrivalRate = data.arrivalDriveway || data.meetAndGreet || baseFare + 10;
 
       // Try creating via API
       try {
@@ -213,7 +219,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
           imageUrl: data.imageUrl || null,
           status: data.status === "active" ? "active" : "inactive",
           prices: {
-            arrival: { amount: meetGreet },
+            arrival: { amount: arrivalRate },
             departure_transfer: { amount: baseFare },
             hourly: { amount: hourly, minimumHours: 3 },
           },
@@ -276,18 +282,25 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         });
 
         // 2. If rate changed, update service rates
-        if (updates.baseRate !== undefined) {
-          await setVehicleServiceRate(numId, "departure_transfer", {
-            amount: updates.baseRate,
-            currency: "SGD",
-          });
-          const arrivalRate = (updates as any).meetAndGreet !== undefined
+        if (updates.baseRate !== undefined || (updates as any).arrivalDriveway !== undefined || (updates as any).meetAndGreet !== undefined) {
+          if (updates.baseRate !== undefined) {
+            await setVehicleServiceRate(numId, "departure_transfer", {
+              amount: updates.baseRate,
+              currency: "SGD",
+            });
+          }
+          const arrivalRate = (updates as any).arrivalDriveway !== undefined
+            ? (updates as any).arrivalDriveway
+            : (updates as any).meetAndGreet !== undefined
             ? (updates as any).meetAndGreet
-            : updates.baseRate + 10;
-          await setVehicleServiceRate(numId, "arrival", {
-            amount: arrivalRate,
-            currency: "SGD",
-          });
+            : (updates.baseRate !== undefined ? updates.baseRate + 10 : undefined);
+
+          if (arrivalRate !== undefined) {
+            await setVehicleServiceRate(numId, "arrival", {
+              amount: arrivalRate,
+              currency: "SGD",
+            });
+          }
         }
         if (updates.hourlyRate !== undefined || (updates as any).charter8h !== undefined) {
           const pkg8h = (updates as any).charter8h !== undefined

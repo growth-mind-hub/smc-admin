@@ -93,8 +93,11 @@ export default function PricingRatesTable() {
                     <div className="inline-flex items-center gap-1 bg-slate-50 hover:bg-white border border-slate-200 rounded-md px-2 py-1 focus-within:ring-1 focus-within:ring-[#C6A45A] focus-within:border-[#C6A45A]">
                       <span className="text-[#C6A45A] font-semibold">$</span>
                       <NumericInput
-                        value={rate.meetAndGreet}
-                        onChange={(val) => updateRate(rate.id, "meetAndGreet", val)}
+                        value={rate.arrivalDriveway ?? rate.meetAndGreet ?? 75}
+                        onChange={(val) => {
+                          updateRate(rate.id, "arrivalDriveway", val);
+                          updateRate(rate.id, "meetAndGreet", val);
+                        }}
                         className="w-12 text-center text-[#C6A45A] font-semibold text-sm bg-transparent outline-none"
                       />
                     </div>
