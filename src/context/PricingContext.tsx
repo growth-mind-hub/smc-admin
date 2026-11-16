@@ -158,10 +158,20 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
               return {
                 ...addon,
                 code: "MEET_GREET",
-                name: "Meet & Greet (Paging Signboard)",
+                name: "Meet & Greet",
+                description: addon.description || "Meet & Greet service",
+              };
+            }
+            if (
+              addon.code === "NIGHT_TRAVEL" ||
+              (addon.code || "").toUpperCase().includes("NIGHT")
+            ) {
+              return {
+                ...addon,
+                name: "Midnight Surcharge (11:30 PM – 6:30 AM SGT)",
                 description:
                   addon.description ||
-                  "Personal chauffeur arrival welcome inside terminal hall with name signboard",
+                  "Late night / early morning operational surcharge (11:30 PM – 6:30 AM Singapore Time)",
               };
             }
             return addon;
@@ -177,8 +187,8 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
           );
           if (misnamedBackendItem) {
             updateAddOn(misnamedBackendItem.id, {
-              name: "Meet & Greet (Paging Signboard)",
-              description: "Personal chauffeur arrival welcome inside terminal hall with name signboard",
+              name: "Meet & Greet",
+              description: "Meet & Greet service",
             }).catch(() => {
               // Ignore background auto-heal if admin session token is not yet initialized
             });
@@ -324,7 +334,7 @@ export function PricingProvider({ children }: { children: React.ReactNode }) {
         (target?.code || "").toUpperCase().includes("MEET") ||
         (cleanUpdates.name && cleanUpdates.name.toLowerCase().includes("driveway"))
       ) {
-        cleanUpdates.name = "Meet & Greet (Paging Signboard)";
+        cleanUpdates.name = "Meet & Greet";
       }
       await updateAddOn(id, cleanUpdates);
       setAddOns((prev) =>

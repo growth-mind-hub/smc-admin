@@ -4,13 +4,12 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from "react"
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
 import { X, AlertCircle } from "lucide-react";
-import NumericInput from "@/Components/Common/NumericInput";
 
 export default function AddVehicleModal() {
   const { isAddVehicleModalOpen, closeAddVehicleModal, addVehicle, totalVehiclesCount } =
     useFleet();
 
-  const [fleetNumber, setFleetNumber] = useState(`SMC-00${totalVehiclesCount + 1}`);
+  const [fleetNumber, setFleetNumber] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -19,14 +18,14 @@ export default function AddVehicleModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [driverName, setDriverName] = useState("");
-  const [driverPhone, setDriverPhone] = useState("+65 ");
-  const [paxCapacity, setPaxCapacity] = useState(6);
-  const [luggageCapacity, setLuggageCapacity] = useState(4);
-  const [baseFare, setBaseFare] = useState(65);
-  const [arrivalDriveway, setArrivalDriveway] = useState(75);
-  const [hourlyRate, setHourlyRate] = useState(60);
-  const [charter3h, setCharter3h] = useState(180);
-  const [charter8h, setCharter8h] = useState(480);
+  const [driverPhone, setDriverPhone] = useState("");
+  const [paxCapacity, setPaxCapacity] = useState<number | "">("");
+  const [luggageCapacity, setLuggageCapacity] = useState<number | "">("");
+  const [baseFare, setBaseFare] = useState<number | "">("");
+  const [arrivalDriveway, setArrivalDriveway] = useState<number | "">("");
+  const [hourlyRate, setHourlyRate] = useState<number | "">("");
+  const [charter3h, setCharter3h] = useState<number | "">("");
+  const [charter8h, setCharter8h] = useState<number | "">("");
   const [isActive, setIsActive] = useState(true);
 
   // Description word count helper
@@ -74,10 +73,56 @@ export default function AddVehicleModal() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleClose = useCallback(() => {
+    setFleetNumber("");
+    setName("");
+    setDescription("");
+    setSelectedFile(null);
+    setImagePreviewUrl(null);
+    setImageError(null);
+    setDriverName("");
+    setDriverPhone("");
+    setPaxCapacity("");
+    setLuggageCapacity("");
+    setBaseFare("");
+    setArrivalDriveway("");
+    setHourlyRate("");
+    setCharter3h("");
+    setCharter8h("");
+    setIsActive(true);
     setSubmitError(null);
     setTouched({});
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     closeAddVehicleModal();
   }, [closeAddVehicleModal]);
+
+  // Reset all fields when modal opens
+  useEffect(() => {
+    if (isAddVehicleModalOpen) {
+      setFleetNumber("");
+      setName("");
+      setDescription("");
+      setSelectedFile(null);
+      setImagePreviewUrl(null);
+      setImageError(null);
+      setDriverName("");
+      setDriverPhone("");
+      setPaxCapacity("");
+      setLuggageCapacity("");
+      setBaseFare("");
+      setArrivalDriveway("");
+      setHourlyRate("");
+      setCharter3h("");
+      setCharter8h("");
+      setIsActive(true);
+      setSubmitError(null);
+      setTouched({});
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, [isAddVehicleModalOpen]);
 
   // Lock background scrolling and handle Escape key when modal is open
   useEffect(() => {
@@ -119,27 +164,37 @@ export default function AddVehicleModal() {
       errs.name = "Vehicle name must be at least 3 characters";
     }
 
-    // Description word count check
-    if (wordCount > 300) {
+    // Vehicle Description (mandatory)
+    const trimmedDesc = description.trim();
+    if (!trimmedDesc) {
+      errs.description = "Vehicle description is required";
+    } else if (wordCount > 300) {
       errs.description = "Vehicle description cannot exceed 300 words";
     }
 
+    // Vehicle Photo (mandatory)
+    if (!selectedFile && !imagePreviewUrl) {
+      errs.photo = "Vehicle photo is required";
+    }
+
     // Capacity checks
-    if (paxCapacity < 1 || paxCapacity > 100) {
+    if (paxCapacity === "" || Number(paxCapacity) < 1 || Number(paxCapacity) > 100) {
       errs.paxCapacity = "Passenger capacity must be between 1 and 100";
     }
-    if (luggageCapacity < 0 || luggageCapacity > 100) {
+    if (luggageCapacity === "" || Number(luggageCapacity) < 0 || Number(luggageCapacity) > 100) {
       errs.luggageCapacity = "Luggage capacity must be between 0 and 100";
     }
 
     // Pricing checks
-    if (baseFare <= 0) {
+    if (baseFare === "" || Number(baseFare) <= 0) {
       errs.baseFare = "Base fare must be at least $1 SGD";
     }
-    if (arrivalDriveway < baseFare) {
+    if (arrivalDriveway === "" || Number(arrivalDriveway) <= 0) {
+      errs.arrivalDriveway = "Arrival Driveway Pickup rate is required";
+    } else if (baseFare !== "" && Number(arrivalDriveway) < Number(baseFare)) {
       errs.arrivalDriveway = "Arrival Driveway Pickup rate should typically be equal to or greater than base fare";
     }
-    if (hourlyRate <= 0) {
+    if (hourlyRate === "" || Number(hourlyRate) <= 0) {
       errs.hourlyRate = "1-Hour charter rate must be at least $1 SGD";
     }
 
@@ -155,6 +210,9 @@ export default function AddVehicleModal() {
   }, [
     fleetNumber,
     name,
+    description,
+    selectedFile,
+    imagePreviewUrl,
     wordCount,
     paxCapacity,
     luggageCapacity,
@@ -194,6 +252,8 @@ export default function AddVehicleModal() {
     const allTouched: Record<string, boolean> = {
       fleetNumber: true,
       name: true,
+      description: true,
+      photo: true,
       paxCapacity: true,
       luggageCapacity: true,
       baseFare: true,
@@ -350,7 +410,7 @@ export default function AddVehicleModal() {
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch flex justify-between items-center">
                   <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                    Vehicle Description
+                    Vehicle Description <span className="text-red-500">*</span>
                   </label>
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
@@ -397,10 +457,14 @@ export default function AddVehicleModal() {
               {/* Vehicle Photo Selection */}
               <div className="self-stretch flex flex-col justify-start items-start gap-2 pt-1">
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                  Vehicle Photo <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
+                  Vehicle Photo <span className="text-red-500">*</span>
                 </label>
 
-                <div className="self-stretch h-32 bg-slate-900 rounded-xl overflow-hidden relative border border-slate-200 flex items-center justify-center">
+                <div className={`self-stretch h-32 bg-slate-900 rounded-xl overflow-hidden relative border flex items-center justify-center transition-all ${
+                  touched.photo && validationErrors.photo
+                    ? "border-red-400 ring-1 ring-red-400"
+                    : "border-slate-200"
+                }`}>
                   {imagePreviewUrl ? (
                     <img
                       src={imagePreviewUrl}
@@ -431,18 +495,31 @@ export default function AddVehicleModal() {
                   </p>
                 )}
 
+                {touched.photo && validationErrors.photo && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.photo}</span>
+                  </p>
+                )}
+
                 <div className="self-stretch flex items-center gap-2">
                   <input
                     type="file"
                     ref={fileInputRef}
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      handleFileChange(e);
+                      markTouched("photo");
+                    }}
                     accept="image/png, image/jpeg, image/webp"
                     className="hidden"
                   />
 
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      markTouched("photo");
+                      fileInputRef.current?.click();
+                    }}
                     className="flex-1 h-9 px-3 bg-stone-100 hover:bg-stone-200 text-slate-700 text-xs font-semibold rounded-lg border border-stone-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,8 +546,8 @@ export default function AddVehicleModal() {
             </div>
           </div>
 
-          {/* Assigned Driver */}
-          <div className="self-stretch flex flex-col justify-start items-start">
+          {/* Assigned Driver Section with Top and Bottom Line Separators */}
+          <div className="self-stretch pt-4 pb-4 border-y border-color-border-subtle flex flex-col justify-start items-start">
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="justify-start text-color-input-placeholder text-xs font-bold font-['Manrope'] uppercase leading-4 tracking-wider">
                 Assigned Driver <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
@@ -531,15 +608,19 @@ export default function AddVehicleModal() {
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   Max Passengers <span className="text-red-500">*</span>
                 </label>
-                <NumericInput
+                <input
+                  type="number"
                   min={1}
                   max={100}
                   value={paxCapacity}
-                  onChange={(val) => {
-                    setPaxCapacity(val);
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPaxCapacity(val === "" ? "" : Number(val));
                     if (submitError) setSubmitError(null);
                   }}
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                  onBlur={() => markTouched("paxCapacity")}
+                  placeholder="e.g. 6"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
                     touched.paxCapacity && validationErrors.paxCapacity
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -557,15 +638,19 @@ export default function AddVehicleModal() {
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   Max Luggage <span className="text-red-500">*</span>
                 </label>
-                <NumericInput
+                <input
+                  type="number"
                   min={0}
                   max={100}
                   value={luggageCapacity}
-                  onChange={(val) => {
-                    setLuggageCapacity(val);
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setLuggageCapacity(val === "" ? "" : Number(val));
                     if (submitError) setSubmitError(null);
                   }}
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                  onBlur={() => markTouched("luggageCapacity")}
+                  placeholder="e.g. 4"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
                     touched.luggageCapacity && validationErrors.luggageCapacity
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -593,14 +678,18 @@ export default function AddVehicleModal() {
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   Base Fare ($) <span className="text-red-500">*</span>
                 </label>
-                <NumericInput
+                <input
+                  type="number"
                   min={1}
                   value={baseFare}
-                  onChange={(val) => {
-                    setBaseFare(val);
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setBaseFare(val === "" ? "" : Number(val));
                     if (submitError) setSubmitError(null);
                   }}
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                  onBlur={() => markTouched("baseFare")}
+                  placeholder="e.g. 65"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
                     touched.baseFare && validationErrors.baseFare
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -616,16 +705,20 @@ export default function AddVehicleModal() {
 
               <div className="flex flex-col justify-start items-start gap-1">
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                  Arrival Driveway Pickup ($)
+                  Arrival Driveway Pickup ($) <span className="text-red-500">*</span>
                 </label>
-                <NumericInput
+                <input
+                  type="number"
                   min={1}
                   value={arrivalDriveway}
-                  onChange={(val) => {
-                    setArrivalDriveway(val);
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setArrivalDriveway(val === "" ? "" : Number(val));
                     if (submitError) setSubmitError(null);
                   }}
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                  onBlur={() => markTouched("arrivalDriveway")}
+                  placeholder="e.g. 75"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
                     touched.arrivalDriveway && validationErrors.arrivalDriveway
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -643,16 +736,21 @@ export default function AddVehicleModal() {
                 <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
                   1-Hour Charter ($) <span className="text-red-500">*</span>
                 </label>
-                <NumericInput
+                <input
+                  type="number"
                   min={1}
                   value={hourlyRate}
-                  onChange={(val) => {
-                    setHourlyRate(val);
-                    setCharter3h(val * 3);
-                    setCharter8h(val * 8);
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const num = val === "" ? "" : Number(val);
+                    setHourlyRate(num);
+                    setCharter3h(num === "" ? "" : num * 3);
+                    setCharter8h(num === "" ? "" : num * 8);
                     if (submitError) setSubmitError(null);
                   }}
-                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none ${
+                  onBlur={() => markTouched("hourlyRate")}
+                  placeholder="e.g. 60"
+                  className={`self-stretch h-10 px-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-color-text-primary font-normal focus:outline-none transition-all ${
                     touched.hourlyRate && validationErrors.hourlyRate
                       ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                       : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -677,12 +775,12 @@ export default function AddVehicleModal() {
                   title="Auto-calculated from 1-Hour Charter (× 3)"
                   className="self-stretch h-10 px-3 py-2.5 rounded-lg bg-stone-200/60 outline outline-1 outline-offset-[-1px] outline-stone-300 flex items-center cursor-not-allowed select-none opacity-80"
                 >
-                  <NumericInput
+                  <input
                     disabled
-                    value={charter3h}
-                    onChange={() => {}}
-                    className="w-full text-xs text-stone-600 font-medium bg-transparent outline-none cursor-not-allowed select-none"
-                    title="Auto-calculated from 1-Hour Charter (× 3)"
+                    type="text"
+                    value={charter3h !== "" ? `$${charter3h}` : ""}
+                    placeholder="Auto (1hr × 3)"
+                    className="w-full text-xs text-stone-600 font-medium bg-transparent outline-none cursor-not-allowed select-none placeholder:text-stone-400"
                   />
                 </div>
               </div>
@@ -698,12 +796,12 @@ export default function AddVehicleModal() {
                   title="Auto-calculated from 1-Hour Charter (× 8)"
                   className="self-stretch h-10 px-3 py-2.5 rounded-lg bg-stone-200/60 outline outline-1 outline-offset-[-1px] outline-stone-300 flex items-center cursor-not-allowed select-none opacity-80"
                 >
-                  <NumericInput
+                  <input
                     disabled
-                    value={charter8h}
-                    onChange={() => {}}
-                    className="w-full text-xs text-stone-600 font-medium bg-transparent outline-none cursor-not-allowed select-none"
-                    title="Auto-calculated from 1-Hour Charter (× 8)"
+                    type="text"
+                    value={charter8h !== "" ? `$${charter8h}` : ""}
+                    placeholder="Auto (1hr × 8)"
+                    className="w-full text-xs text-stone-600 font-medium bg-transparent outline-none cursor-not-allowed select-none placeholder:text-stone-400"
                   />
                 </div>
               </div>

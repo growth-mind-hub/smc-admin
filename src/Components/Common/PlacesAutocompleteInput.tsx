@@ -141,7 +141,7 @@ export default function PlacesAutocompleteInput({
     <div ref={containerRef} className={`relative w-full flex flex-col gap-1 ${className}`}>
       {label && (
         <label className="text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-          {label}
+          {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
@@ -166,7 +166,7 @@ export default function PlacesAutocompleteInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className={`w-full h-10 pl-9 pr-8 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal font-['Manrope'] placeholder:text-slate-900/50 focus:outline-none transition-all ${
+          className={`w-full h-10 pl-9 pr-8 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal font-['Manrope'] placeholder:text-stone-400 focus:outline-none transition-all ${
             error
               ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
               : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"

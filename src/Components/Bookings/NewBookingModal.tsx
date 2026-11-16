@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
 import PlacesAutocompleteInput from "@/Components/Common/PlacesAutocompleteInput";
-import NumericInput from "@/Components/Common/NumericInput";
 
 const SERVICES_CATALOG = [
   {
@@ -54,30 +53,26 @@ export default function NewBookingModal() {
 
   // Form State
   const [customerName, setCustomerName] = useState("");
-  const [phone, setPhone] = useState("+65 ");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [channel, setChannel] = useState<BookingChannel>("phone");
+  const [channel, setChannel] = useState<BookingChannel | "">("");
 
   // Service & Vehicle
-  const [serviceId, setServiceId] = useState<number>(1);
-  const [hours, setHours] = useState<number>(8); // default to 8h for hourly
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>(
-    vehicles[0]?.id || "3"
-  );
+  const [serviceId, setServiceId] = useState<number | null>(null);
+  const [hours, setHours] = useState<number | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
 
   // Driver Assignment
   const [driverName, setDriverName] = useState("");
   const [driverPhone, setDriverPhone] = useState("");
 
   // Trip Route & Schedule
-  const [pickupLocation, setPickupLocation] = useState("Changi Airport Terminal 1");
-  const [dropoffLocation, setDropoffLocation] = useState("Marina Bay Sands");
-  const [pickupDate, setPickupDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [pickupTime, setPickupTime] = useState("10:00");
-  const [passengers, setPassengers] = useState(2);
-  const [luggageBags, setLuggageBags] = useState(2);
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [dropoffLocation, setDropoffLocation] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
+  const [passengers, setPassengers] = useState<number | "">("");
+  const [luggageBags, setLuggageBags] = useState<number | "">("");
 
   // Add-ons selection: map of add_on_id -> quantity
   const [selectedAddons, setSelectedAddons] = useState<Record<number, number>>({});
@@ -100,25 +95,23 @@ export default function NewBookingModal() {
 
   // Active Vehicle Object
   const currentVehicle = useMemo(() => {
+    if (!selectedVehicleId) return null;
     return (
       vehicles.find((v) => v.id === selectedVehicleId || String(v.apiId) === selectedVehicleId) ||
-      vehicles[0]
+      null
     );
   }, [vehicles, selectedVehicleId]);
 
   // Selected Service Object
   const currentService = useMemo(() => {
-    return SERVICES_CATALOG.find((s) => s.id === serviceId) || SERVICES_CATALOG[0];
+    if (!serviceId) return null;
+    return SERVICES_CATALOG.find((s) => s.id === serviceId) || null;
   }, [serviceId]);
 
-  // Sync default driver when vehicle changes if not custom typed
+  // Vehicle selection (no auto-filling driver details - user may enter their own)
   const handleSelectVehicle = (vId: string) => {
     setSelectedVehicleId(vId);
-    const target = vehicles.find((v) => v.id === vId || String(v.apiId) === vId);
-    if (target) {
-      setDriverName(target.driverName);
-      setDriverPhone(target.driverPhone);
-    }
+    if (submitError) setSubmitError(null);
   };
 
   const handleToggleAddon = (addOnId: number) => {
@@ -148,15 +141,16 @@ export default function NewBookingModal() {
 
   // Estimated fare calculation
   const estimatedFare = useMemo(() => {
-    if (!currentVehicle) return 65;
+    if (!currentVehicle || !currentService) return 0;
     let base = currentVehicle.baseRate;
     if (currentService.id === 2) {
       base = currentVehicle.baseRate + 10;
     } else if (currentService.id === 3) {
-      if (hours === 8 && currentVehicle.prices?.hourly?.eightHourAmount) {
+      const h = hours || 3;
+      if (h === 8 && currentVehicle.prices?.hourly?.eightHourAmount) {
         base = currentVehicle.prices.hourly.eightHourAmount;
       } else {
-        base = currentVehicle.hourlyRate * hours;
+        base = currentVehicle.hourlyRate * h;
       }
     }
 
@@ -199,6 +193,21 @@ export default function NewBookingModal() {
       }
     }
 
+    // Channel Validation
+    if (!channel) {
+      errs.channel = "Please select a booking channel";
+    }
+
+    // Service Selection
+    if (!serviceId) {
+      errs.serviceId = "Please select a service type";
+    }
+
+    // Vehicle Selection
+    if (!selectedVehicleId) {
+      errs.selectedVehicleId = "Please select a vehicle";
+    }
+
     // Pickup & Dropoff Addresses
     if (!pickupLocation.trim()) {
       errs.pickupLocation = "Pickup address is required";
@@ -229,18 +238,19 @@ export default function NewBookingModal() {
     }
 
     // Passenger Capacity Check
-    if (passengers < 1) {
-      errs.passengers = "At least 1 passenger is required";
-    } else if (currentVehicle?.paxCapacity && passengers > currentVehicle.paxCapacity) {
+    if (passengers === "" || Number(passengers) < 1) {
+      errs.passengers = "Passenger count is required (min 1)";
+    } else if (currentVehicle?.paxCapacity && Number(passengers) > currentVehicle.paxCapacity) {
       errs.passengers = `Exceeds vehicle capacity (${currentVehicle.paxCapacity} pax)`;
     }
 
     // Luggage Capacity Check
-    if (luggageBags < 0) {
+    if (luggageBags !== "" && Number(luggageBags) < 0) {
       errs.luggageBags = "Luggage count cannot be negative";
     } else if (
+      luggageBags !== "" &&
       currentVehicle?.luggageCapacity &&
-      luggageBags > currentVehicle.luggageCapacity
+      Number(luggageBags) > currentVehicle.luggageCapacity
     ) {
       errs.luggageBags = `Exceeds vehicle capacity (${currentVehicle.luggageCapacity} bags)`;
     }
@@ -254,7 +264,7 @@ export default function NewBookingModal() {
     }
 
     // Hourly Duration Check
-    if (currentService.isHourly && (hours < 1 || hours > 24)) {
+    if (currentService?.isHourly && (!hours || hours < 1 || hours > 24)) {
       errs.hours = "Charter duration must be between 1 and 24 hours";
     }
 
@@ -263,6 +273,9 @@ export default function NewBookingModal() {
     customerName,
     phone,
     email,
+    channel,
+    serviceId,
+    selectedVehicleId,
     pickupLocation,
     dropoffLocation,
     pickupDate,
@@ -271,18 +284,59 @@ export default function NewBookingModal() {
     luggageBags,
     currentVehicle,
     driverPhone,
-    currentService.isHourly,
+    currentService,
     hours,
   ]);
 
   const hasErrors = Object.keys(validationErrors).length > 0;
 
   const handleResetAndClose = useCallback(() => {
+    setCustomerName("");
+    setPhone("");
+    setEmail("");
+    setChannel("");
+    setServiceId(null);
+    setHours(null);
+    setSelectedVehicleId("");
+    setDriverName("");
+    setDriverPhone("");
+    setPickupLocation("");
+    setDropoffLocation("");
+    setPickupDate("");
+    setPickupTime("");
+    setPassengers("");
+    setLuggageBags("");
+    setSelectedAddons({});
     setCreatedBookingResult(null);
     setSubmitError(null);
     setTouched({});
     closeNewBookingModal();
   }, [closeNewBookingModal]);
+
+  // Reset form to blank on every modal open
+  useEffect(() => {
+    if (isNewBookingModalOpen) {
+      setCustomerName("");
+      setPhone("");
+      setEmail("");
+      setChannel("");
+      setServiceId(null);
+      setHours(null);
+      setSelectedVehicleId("");
+      setDriverName("");
+      setDriverPhone("");
+      setPickupLocation("");
+      setDropoffLocation("");
+      setPickupDate("");
+      setPickupTime("");
+      setPassengers("");
+      setLuggageBags("");
+      setSelectedAddons({});
+      setCreatedBookingResult(null);
+      setSubmitError(null);
+      setTouched({});
+    }
+  }, [isNewBookingModalOpen]);
 
   // Lock background scrolling and handle Escape key when modal is open
   useEffect(() => {
@@ -315,6 +369,9 @@ export default function NewBookingModal() {
       customerName: true,
       phone: true,
       email: true,
+      channel: true,
+      serviceId: true,
+      selectedVehicleId: true,
       pickupLocation: true,
       dropoffLocation: true,
       pickupDate: true,
@@ -326,11 +383,15 @@ export default function NewBookingModal() {
     };
     setTouched(allTouched);
 
-    if (hasErrors) {
-      const firstErrorMessage = Object.values(validationErrors)[0];
-      setSubmitError(
-        firstErrorMessage || "Please correct the highlighted form errors before proceeding."
-      );
+    if (hasErrors || !currentVehicle || !currentService) {
+      const firstErrorMessage =
+        Object.values(validationErrors)[0] ||
+        (!currentService
+          ? "Please select a service type"
+          : !currentVehicle
+          ? "Please select a vehicle"
+          : "Please correct the highlighted form errors before proceeding.");
+      setSubmitError(firstErrorMessage);
       return;
     }
 
@@ -367,7 +428,7 @@ export default function NewBookingModal() {
           ? driverPhone.trim()
           : `+65${driverPhone.replace(/[^0-9]/g, "")}`
         : undefined,
-      hours: currentService.isHourly ? Number(hours) : undefined,
+      hours: currentService.isHourly ? Number(hours || 3) : undefined,
     };
 
     try {
@@ -517,7 +578,7 @@ export default function NewBookingModal() {
                       if (submitError) setSubmitError(null);
                     }}
                     onBlur={() => markTouched("customerName")}
-                    placeholder="e.g. John Smith"
+                    placeholder="Enter customer full name"
                     className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
                       touched.customerName && validationErrors.customerName
                         ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
@@ -545,7 +606,7 @@ export default function NewBookingModal() {
                         if (submitError) setSubmitError(null);
                       }}
                       onBlur={() => markTouched("phone")}
-                      placeholder="+65 9123 4567"
+                      placeholder="Enter phone number"
                       className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
                         touched.phone && validationErrors.phone
                           ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
@@ -572,7 +633,7 @@ export default function NewBookingModal() {
                         if (submitError) setSubmitError(null);
                       }}
                       onBlur={() => markTouched("email")}
-                      placeholder="john@example.com"
+                      placeholder="Enter email address (optional)"
                       className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
                         touched.email && validationErrors.email
                           ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
@@ -591,7 +652,7 @@ export default function NewBookingModal() {
                 {/* Channel Pill Selection */}
                 <div className="self-stretch flex flex-col gap-1">
                   <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                    Booking Channel
+                    Booking Channel <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -605,7 +666,10 @@ export default function NewBookingModal() {
                         <button
                           key={ch.id}
                           type="button"
-                          onClick={() => setChannel(ch.id)}
+                          onClick={() => {
+                            setChannel(ch.id);
+                            if (submitError) setSubmitError(null);
+                          }}
                           className={`py-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                             channel === ch.id
                               ? "bg-stone-900 text-white border-stone-900"
@@ -618,6 +682,12 @@ export default function NewBookingModal() {
                       );
                     })}
                   </div>
+                  {touched.channel && validationErrors.channel && (
+                    <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in">
+                      <AlertCircle className="size-3 flex-shrink-0" />
+                      <span>{validationErrors.channel}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -625,7 +695,7 @@ export default function NewBookingModal() {
             {/* Section 2: Service Category & Duration */}
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="justify-start text-color-input-placeholder text-xs font-bold font-['Manrope'] uppercase leading-4 tracking-wider">
-                2. Select Service
+                2. Select Service <span className="text-red-500">*</span>
               </div>
               <div className="self-stretch pt-2.5 flex flex-col gap-2">
                 {SERVICES_CATALOG.map((svc) => {
@@ -633,7 +703,11 @@ export default function NewBookingModal() {
                   return (
                     <div
                       key={svc.id}
-                      onClick={() => setServiceId(svc.id)}
+                      onClick={() => {
+                        setServiceId(svc.id);
+                        if (svc.id === 3 && !hours) setHours(3);
+                        if (submitError) setSubmitError(null);
+                      }}
                       className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         isSelected
                           ? "bg-amber-50/50 border-amber-500 ring-1 ring-amber-500/50"
@@ -658,7 +732,7 @@ export default function NewBookingModal() {
                 })}
 
                 {/* If Hourly Charter selected: Hours Package Selection */}
-                {currentService.isHourly && (
+                {currentService?.isHourly && (
                   <div className="mt-1 p-3 bg-stone-50 border border-stone-200 rounded-xl flex flex-col gap-2 animate-in fade-in">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -666,7 +740,7 @@ export default function NewBookingModal() {
                         <span>Charter Duration (Hours)</span>
                       </label>
                       <span className="text-xs font-bold text-amber-600">
-                        {hours === 8 ? "8-Hour Package Special" : `${hours} Hours`}
+                        {hours === 8 ? "8-Hour Package Special" : `${hours || 3} Hours`}
                       </span>
                     </div>
 
@@ -694,26 +768,33 @@ export default function NewBookingModal() {
                     )}
                   </div>
                 )}
+                {touched.serviceId && validationErrors.serviceId && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.serviceId}</span>
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Section 3: Vehicle Selection */}
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="justify-start text-color-input-placeholder text-xs font-bold font-['Manrope'] uppercase leading-4 tracking-wider">
-                3. Vehicle Selection
+                3. Vehicle Selection <span className="text-red-500">*</span>
               </div>
               <div className="self-stretch pt-2.5 flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
                 {vehicles
                   .filter((v) => v.status === "active")
                   .map((v) => {
                     const isSelected =
-                      selectedVehicleId === v.id || String(v.apiId) === selectedVehicleId;
+                      Boolean(selectedVehicleId) &&
+                      (selectedVehicleId === v.id || String(v.apiId) === selectedVehicleId);
                     const fareDisplay =
-                      currentService.id === 3
-                        ? hours === 8 && v.prices?.hourly?.eightHourAmount
+                      currentService?.id === 3
+                        ? (hours || 3) === 8 && v.prices?.hourly?.eightHourAmount
                           ? v.prices.hourly.eightHourAmount
-                          : v.hourlyRate * hours
-                        : currentService.id === 2
+                          : v.hourlyRate * (hours || 3)
+                        : currentService?.id === 2
                         ? v.baseRate + 10
                         : v.baseRate;
 
@@ -745,13 +826,19 @@ export default function NewBookingModal() {
                             ${fareDisplay}
                           </span>
                           <span className="text-[10px] text-slate-400 block">
-                            {currentService.isHourly ? `${hours}h total` : "trip"}
+                            {currentService?.isHourly ? `${hours || 3}h total` : "trip"}
                           </span>
                         </div>
                       </div>
                     );
                   })}
               </div>
+              {touched.selectedVehicleId && validationErrors.selectedVehicleId && (
+                <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-1 animate-in fade-in">
+                  <AlertCircle className="size-3 flex-shrink-0" />
+                  <span>{validationErrors.selectedVehicleId}</span>
+                </p>
+              )}
             </div>
 
             {/* Section 4: Trip Locations & Schedule */}
@@ -770,7 +857,7 @@ export default function NewBookingModal() {
                   }}
                   onBlur={() => markTouched("pickupLocation")}
                   error={touched.pickupLocation ? validationErrors.pickupLocation : undefined}
-                  placeholder="e.g. Changi Airport Terminal 1"
+                  placeholder="Enter pickup address"
                 />
 
                 <PlacesAutocompleteInput
@@ -783,7 +870,7 @@ export default function NewBookingModal() {
                   }}
                   onBlur={() => markTouched("dropoffLocation")}
                   error={touched.dropoffLocation ? validationErrors.dropoffLocation : undefined}
-                  placeholder="e.g. Marina Bay Sands"
+                  placeholder="Enter dropoff address"
                 />
 
                 <div className="grid grid-cols-2 gap-3">
@@ -854,7 +941,7 @@ export default function NewBookingModal() {
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between items-center">
                       <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide">
-                        Passengers
+                        Passengers <span className="text-red-500">*</span>
                       </label>
                       {currentVehicle && (
                         <span className="text-[10px] text-slate-400">
@@ -862,15 +949,19 @@ export default function NewBookingModal() {
                         </span>
                       )}
                     </div>
-                    <NumericInput
+                    <input
+                      type="number"
                       min={1}
-                      max={100}
+                      max={currentVehicle?.paxCapacity || 100}
                       value={passengers}
-                      onChange={(val) => {
-                        setPassengers(val);
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPassengers(val === "" ? "" : Number(val));
                         if (submitError) setSubmitError(null);
                       }}
-                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none ${
+                      onBlur={() => markTouched("passengers")}
+                      placeholder="Enter passenger count"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
                         touched.passengers && validationErrors.passengers
                           ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                           : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -895,15 +986,19 @@ export default function NewBookingModal() {
                         </span>
                       )}
                     </div>
-                    <NumericInput
+                    <input
+                      type="number"
                       min={0}
-                      max={100}
+                      max={currentVehicle?.luggageCapacity || 100}
                       value={luggageBags}
-                      onChange={(val) => {
-                        setLuggageBags(val);
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLuggageBags(val === "" ? "" : Number(val));
                         if (submitError) setSubmitError(null);
                       }}
-                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none ${
+                      onBlur={() => markTouched("luggageBags")}
+                      placeholder="Enter luggage count"
+                      className={`w-full h-10 px-3 py-2 rounded-lg outline outline-1 outline-offset-[-1px] text-xs text-slate-900 font-normal focus:outline-none transition-all ${
                         touched.luggageBags && validationErrors.luggageBags
                           ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
                           : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
@@ -937,7 +1032,7 @@ export default function NewBookingModal() {
                         (addon.code || "").toUpperCase().includes("MEET") ||
                         (addon.name || "").toLowerCase().includes("driveway");
                       const displayName = isMeetGreet
-                        ? "Meet & Greet (Paging Signboard)"
+                        ? "Meet & Greet"
                         : addon.name;
 
                       return (
@@ -1010,7 +1105,7 @@ export default function NewBookingModal() {
                     type="text"
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
-                    placeholder="Driver Name (e.g. Ahmad Rizal)"
+                    placeholder="Enter driver name (optional)"
                     className="w-full h-9 px-3 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
@@ -1023,7 +1118,7 @@ export default function NewBookingModal() {
                       if (submitError) setSubmitError(null);
                     }}
                     onBlur={() => markTouched("driverPhone")}
-                    placeholder="Driver Phone (e.g. +65 9123 4567)"
+                    placeholder="Enter driver phone (optional)"
                     className={`w-full h-9 px-3 bg-white rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
                       touched.driverPhone && validationErrors.driverPhone
                         ? "border border-red-400 focus:ring-1 focus:ring-red-400"
@@ -1047,7 +1142,7 @@ export default function NewBookingModal() {
                   Backend Calculated Estimate
                 </div>
                 <div className="justify-start text-orange-400 text-xl font-bold font-['Manrope'] leading-8">
-                  ${estimatedFare} SGD
+                  {estimatedFare > 0 ? `$${estimatedFare} SGD` : "—"}
                 </div>
               </div>
               <div className="flex justify-start items-center gap-2">

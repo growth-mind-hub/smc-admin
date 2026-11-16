@@ -80,8 +80,8 @@ export const initialAddOns: ApiAddOn[] = [
   {
     id: 1,
     code: "NIGHT_TRAVEL",
-    name: "Travelling between 23:30–06:30",
-    description: "Late night / early morning operational surcharge",
+    name: "Midnight Surcharge (11:30 PM – 6:30 AM SGT)",
+    description: "Late night / early morning operational surcharge (11:30 PM – 6:30 AM Singapore Time)",
     pricing_type: "FIXED",
     price: 10,
     currency: "SGD",
@@ -92,8 +92,8 @@ export const initialAddOns: ApiAddOn[] = [
   {
     id: 2,
     code: "MEET_GREET",
-    name: "Meet & Greet (Paging Signboard)",
-    description: "Personal chauffeur greeting inside arrival hall holding a personalized name board",
+    name: "Meet & Greet",
+    description: "Meet & Greet service",
     pricing_type: "FIXED",
     price: 25,
     currency: "SGD",

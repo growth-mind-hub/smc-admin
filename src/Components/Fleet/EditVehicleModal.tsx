@@ -185,6 +185,18 @@ export default function EditVehicleModal() {
       setSubmitError("Vehicle name is required.");
       return;
     }
+    if (!description.trim()) {
+      setSubmitError("Vehicle description is required.");
+      return;
+    }
+    if (wordCount > 300) {
+      setSubmitError("Vehicle description cannot exceed 300 words.");
+      return;
+    }
+    if (!selectedFile && !currentImageUrl && !editingVehicle.imageUrl) {
+      setSubmitError("Vehicle photo is required.");
+      return;
+    }
     if (paxCapacity < 1 || paxCapacity > 100) {
       setSubmitError("Passenger capacity must be between 1 and 100.");
       return;
@@ -197,8 +209,8 @@ export default function EditVehicleModal() {
       setSubmitError("Base fare must be at least $1 SGD.");
       return;
     }
-    if (wordCount > 300) {
-      setSubmitError("Vehicle description cannot exceed 300 words.");
+    if (!arrivalDriveway || arrivalDriveway <= 0) {
+      setSubmitError("Arrival Driveway Pickup rate must be at least $1 SGD.");
       return;
     }
 
@@ -316,7 +328,7 @@ export default function EditVehicleModal() {
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="self-stretch flex justify-between items-center">
                   <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                    Vehicle Description
+                    Vehicle Description <span className="text-red-500">*</span>
                   </div>
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
@@ -363,7 +375,7 @@ export default function EditVehicleModal() {
               <div className="self-stretch flex flex-col justify-start items-start gap-2 pt-1">
                 <div className="self-stretch flex justify-between items-center">
                   <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                    Vehicle Photo
+                    Vehicle Photo <span className="text-red-500">*</span>
                   </div>
                   {currentImageUrl && (
                     <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -460,11 +472,11 @@ export default function EditVehicleModal() {
             </div>
           </div>
 
-          {/* Assigned Driver */}
-          <div className="self-stretch flex flex-col justify-start items-start">
+          {/* Assigned Driver Section with Top and Bottom Line Separators */}
+          <div className="self-stretch pt-4 pb-4 border-y border-color-border-subtle flex flex-col justify-start items-start">
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="justify-start text-color-input-placeholder text-xs font-bold font-['Manrope'] uppercase leading-4 tracking-wider">
-                Assigned Driver
+                Assigned Driver <span className="text-stone-400 text-[10px] normal-case">(Optional)</span>
               </div>
             </div>
             <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-3">
@@ -540,7 +552,7 @@ export default function EditVehicleModal() {
             <div className="self-stretch pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col justify-start items-start gap-1">
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Base Fare ($)
+                  Base Fare ($) <span className="text-red-500">*</span>
                 </div>
                 <NumericInput
                   min={0}
@@ -552,7 +564,7 @@ export default function EditVehicleModal() {
 
               <div className="flex flex-col justify-start items-start gap-1">
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Arrival Driveway Pickup ($)
+                  Arrival Driveway Pickup ($) <span className="text-red-500">*</span>
                 </div>
                 <NumericInput
                   min={0}

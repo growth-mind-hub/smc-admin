@@ -165,10 +165,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. Resolve Google API Key
+    // 2. Resolve Google API Key (kept strictly on server side)
     const apiKey =
       process.env.GOOGLE_PLACES_API_KEY ||
-      process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY ||
       process.env.GOOGLE_MAPS_API_KEY;
 
     if (apiKey) {
@@ -178,10 +177,12 @@ export async function POST(request: NextRequest) {
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "*",
           },
           body: JSON.stringify({
             input,
             includedRegionCodes: ["sg"],
+            languageCode: "en",
           }),
           cache: "no-store",
         });
@@ -190,15 +191,31 @@ export async function POST(request: NextRequest) {
           const googleData = await googleRes.json();
           const rawPredictions = googleData.suggestions || [];
 
-          const suggestions: PlaceSuggestion[] = rawPredictions.map((item: any) => {
-            const pred = item.placePrediction || {};
-            return {
-              placeId: pred.placeId || pred.place || `sg-${Math.random()}`,
-              description: pred.text?.text || pred.structuredFormat?.mainText?.text || input,
-              mainText: pred.structuredFormat?.mainText?.text || pred.text?.text || input,
-              secondaryText: pred.structuredFormat?.secondaryText?.text || "Singapore",
-            };
-          });
+          const suggestions: PlaceSuggestion[] = rawPredictions
+            .map((item: any) => {
+              const pred = item.placePrediction || {};
+              const placeId =
+                pred.placeId ||
+                (pred.place ? pred.place.replace("places/", "") : "") ||
+                `sg-${Math.random()}`;
+              const mainText =
+                pred.structuredFormat?.mainText?.text ||
+                pred.text?.text ||
+                input;
+              const secondaryText =
+                pred.structuredFormat?.secondaryText?.text || "Singapore";
+              const description =
+                pred.text?.text ||
+                (secondaryText ? `${mainText}, ${secondaryText}` : mainText);
+
+              return {
+                placeId,
+                description,
+                mainText,
+                secondaryText,
+              };
+            })
+            .filter((s: PlaceSuggestion) => Boolean(s.mainText || s.description));
 
           // Cache results
           SERVER_CACHE.set(cacheKey, {
@@ -212,8 +229,9 @@ export async function POST(request: NextRequest) {
             source: "google_places_api",
           });
         } else {
+          const errText = await googleRes.text().catch(() => "");
           console.warn(
-            `Google Places API returned status ${googleRes.status}. Falling back to curated directory.`
+            `Google Places API returned status ${googleRes.status}: ${errText}. Falling back to curated directory.`
           );
         }
       } catch (apiErr) {

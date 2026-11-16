@@ -549,9 +549,13 @@ export default function PricingPage() {
                         addon.code === "MEET_GREET" ||
                         (addon.code || "").toUpperCase().includes("MEET") ||
                         (addon.name || "").toLowerCase().includes("driveway");
-                      const displayName = isMeetGreet
-                        ? "Meet & Greet (Paging Signboard)"
-                        : addon.name;
+                      const isNightTravel =
+                        addon.code === "NIGHT_TRAVEL" ||
+                        (addon.code || "").toUpperCase().includes("NIGHT");
+
+                      let displayName = addon.name;
+                      if (isMeetGreet) displayName = "Meet & Greet";
+                      else if (isNightTravel) displayName = "Midnight Surcharge (11:30 PM – 6:30 AM SGT)";
 
                       return (
                         <tr key={addon.id} className="hover:bg-stone-50/60 transition-colors">
@@ -560,9 +564,9 @@ export default function PricingPage() {
                           </td>
                           <td className="px-5 py-4 font-semibold text-color-text-primary">
                             <div>{displayName}</div>
-                            {isMeetGreet && (
+                            {isNightTravel && (
                               <div className="text-[11px] text-slate-400 font-normal">
-                                Airport arrival paging signboard welcome inside terminal
+                                Operational surcharge for trips between 11:30 PM – 6:30 AM (Singapore Time)
                               </div>
                             )}
                           </td>
@@ -771,6 +775,19 @@ export default function PricingPage() {
               <div className="self-stretch flex flex-col justify-start items-start">
                 <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
                   Arrival Driveway Pickup applies to curbside airport pickup per fleet category at Changi Airport. Meet &amp; Greet with personalized signboard welcome inside the arrival hall is configured under Add-Ons &amp; Extras.
+                </div>
+              </div>
+              <div className="w-3 h-4 left-[-17px] top-0 absolute inline-flex justify-end items-center">
+                <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
+                  •
+                </div>
+              </div>
+            </div>
+
+            <div className="self-stretch relative flex flex-col justify-start items-start">
+              <div className="self-stretch flex flex-col justify-start items-start">
+                <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-4">
+                  Midnight surcharge applies to trips scheduled between 11:30 PM – 6:30 AM (Singapore Time / SGT) configured under Add-Ons &amp; Extras.
                 </div>
               </div>
               <div className="w-3 h-4 left-[-17px] top-0 absolute inline-flex justify-end items-center">
