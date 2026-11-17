@@ -139,7 +139,17 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         [];
 
       if (rawList && rawList.length > 0) {
-        const activeMapped = rawList.map((item, idx) => mapApiToVehicle(item, idx));
+        let deletedIds: string[] = [];
+        try {
+          if (typeof window !== "undefined") {
+            const storedDel = localStorage.getItem("smc_deleted_vehicle_ids");
+            if (storedDel) deletedIds = JSON.parse(storedDel);
+          }
+        } catch {}
+
+        const activeMapped = rawList
+          .filter((item) => !deletedIds.includes(String(item.id)))
+          .map((item, idx) => mapApiToVehicle(item, idx));
 
         // Inactive vehicles disappear from public /api/v1/vehicles lists
         // Retrieve any tracked inactive vehicle IDs to fetch via /api/v1/vehicles/:id
@@ -153,6 +163,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
 
         const inactiveVehicles: Vehicle[] = [];
         for (const inactId of inactiveIds) {
+          if (deletedIds.includes(String(inactId))) continue;
           if (!activeMapped.some((v) => v.apiId === inactId)) {
             try {
               const single = await getVehicleById(inactId);
@@ -395,7 +406,19 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteVehicle = (id: string) => {
-    setVehicles((prev) => prev.filter((v) => v.id !== id));
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("smc_deleted_vehicle_ids");
+        const ids: string[] = stored ? JSON.parse(stored) : [];
+        if (!ids.includes(id)) ids.push(id);
+        const target = vehicles.find((v) => v.id === id);
+        if (target?.apiId && !ids.includes(String(target.apiId))) {
+          ids.push(String(target.apiId));
+        }
+        localStorage.setItem("smc_deleted_vehicle_ids", JSON.stringify(ids));
+      } catch {}
+    }
+    setVehicles((prev) => prev.filter((v) => v.id !== id && String(v.apiId) !== id));
   };
 
   const activeVehiclesCount = useMemo(() => {

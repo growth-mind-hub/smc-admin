@@ -3,7 +3,7 @@
 import React from "react";
 import { Vehicle } from "@/types/fleet";
 import { useFleet } from "@/context/FleetContext";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
 
 interface FleetCardProps {
@@ -11,7 +11,7 @@ interface FleetCardProps {
 }
 
 export default function FleetCard({ vehicle }: FleetCardProps) {
-  const { openEditVehicleModal, toggleVehicleStatus } = useFleet();
+  const { openEditVehicleModal, toggleVehicleStatus, deleteVehicle } = useFleet();
 
   const driverInitials = vehicle.driverName
     .split(" ")
@@ -227,6 +227,19 @@ export default function FleetCard({ vehicle }: FleetCardProps) {
             <div className="text-center justify-start text-xs font-semibold font-['Manrope'] leading-4">
               {vehicle.status === "active" ? "Deactivate" : "Activate"}
             </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete "${vehicle.name}"? This vehicle will be removed from your fleet.`)) {
+                deleteVehicle(vehicle.id);
+              }
+            }}
+            title="Delete Vehicle"
+            className="p-2 rounded-lg outline outline-1 outline-offset-[-1px] outline-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:outline-red-300 transition-colors cursor-pointer flex justify-center items-center"
+          >
+            <Trash2 className="size-4" />
           </button>
         </div>
       </div>

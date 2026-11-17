@@ -1,13 +1,113 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { useBookings } from "@/context/BookingContext";
 import { Booking } from "@/types/booking";
-import { Globe, PhoneCall, Mail } from "lucide-react";
+import { Globe, PhoneCall, Mail, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
+
+type SortField = "ref" | "contact" | "route" | "date" | "source" | "status" | "fare";
+type SortOrder = "asc" | "desc";
 
 export default function BookingsTable() {
   const { filteredBookings, activeBookingId, openBookingDetails, isLoading } = useBookings();
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortedBookings = useMemo(() => {
+    return [...filteredBookings].sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case "ref": {
+          const refA = (a.refNumber || "").toLowerCase();
+          const refB = (b.refNumber || "").toLowerCase();
+          comparison = refA.localeCompare(refB, undefined, { numeric: true });
+          if (comparison === 0) {
+            comparison = (a.customerName || "").localeCompare(b.customerName || "");
+          }
+          break;
+        }
+        case "contact": {
+          const phoneA = (a.phone || "").toLowerCase();
+          const phoneB = (b.phone || "").toLowerCase();
+          comparison = phoneA.localeCompare(phoneB);
+          if (comparison === 0) {
+            comparison = (a.email || "").localeCompare(b.email || "");
+          }
+          break;
+        }
+        case "route": {
+          const routeA = `${a.pickupLocation || ""} ${a.dropoffLocation || ""}`.toLowerCase();
+          const routeB = `${b.pickupLocation || ""} ${b.dropoffLocation || ""}`.toLowerCase();
+          comparison = routeA.localeCompare(routeB);
+          break;
+        }
+        case "date": {
+          const dateStrA = `${a.pickupDate || ""} ${a.pickupTime || ""}`.trim();
+          const dateStrB = `${b.pickupDate || ""} ${b.pickupTime || ""}`.trim();
+          comparison = dateStrA.localeCompare(dateStrB);
+          break;
+        }
+        case "source": {
+          comparison = (a.channel || "").localeCompare(b.channel || "");
+          break;
+        }
+        case "status": {
+          comparison = (a.status || "").localeCompare(b.status || "");
+          break;
+        }
+        case "fare": {
+          const fareA =
+            typeof a.fare === "number"
+              ? a.fare
+              : parseFloat(String(a.fare).replace(/[^0-9.-]/g, "")) || 0;
+          const fareB =
+            typeof b.fare === "number"
+              ? b.fare
+              : parseFloat(String(b.fare).replace(/[^0-9.-]/g, "")) || 0;
+          comparison = fareA - fareB;
+          break;
+        }
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+  }, [filteredBookings, sortField, sortOrder]);
+
+  const renderSortHeader = (label: string, field: SortField, className: string = "") => {
+    const isCurrent = sortField === field;
+    return (
+      <th
+        key={field}
+        onClick={() => handleSort(field)}
+        className={`px-4 py-3 select-none cursor-pointer group transition-colors hover:bg-stone-200/60 ${className}`}
+        title={`Sort by ${label} (${isCurrent ? (sortOrder === "asc" ? "Ascending" : "Descending") : "Click to sort"})`}
+      >
+        <div className="inline-flex items-center gap-1.5 font-semibold">
+          <span>{label}</span>
+          <span className="flex items-center">
+            {isCurrent ? (
+              sortOrder === "asc" ? (
+                <ArrowUp className="size-3.5 text-orange-500 font-bold" />
+              ) : (
+                <ArrowDown className="size-3.5 text-orange-500 font-bold" />
+              )
+            ) : (
+              <ArrowUpDown className="size-3 text-stone-400 group-hover:text-stone-600 transition-colors" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
 
   const getSourceBadge = (channel: Booking["channel"]) => {
     switch (channel) {
@@ -142,17 +242,17 @@ export default function BookingsTable() {
         <table className="w-full text-left border-collapse min-w-[760px]">
           <thead>
             <tr className="bg-stone-100 border-b border-color-border-subtle text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase tracking-wide">
-              <th className="px-4 py-3">Ref / Customer</th>
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">Route</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Source</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Fare</th>
+              {renderSortHeader("Ref / Customer", "ref")}
+              {renderSortHeader("Contact", "contact")}
+              {renderSortHeader("Route", "route")}
+              {renderSortHeader("Date", "date")}
+              {renderSortHeader("Source", "source")}
+              {renderSortHeader("Status", "status")}
+              {renderSortHeader("Fare", "fare")}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 text-xs">
-            {filteredBookings.map((booking: Booking) => {
+            {sortedBookings.map((booking: Booking) => {
               const isSelected = booking.id === activeBookingId;
               const srcBadge = getSourceBadge(booking.channel);
               const statBadge = getStatusBadge(booking.status);

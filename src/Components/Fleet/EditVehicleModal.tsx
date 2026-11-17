@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, Trash2 } from "lucide-react";
 import NumericInput from "@/Components/Common/NumericInput";
 
 export default function EditVehicleModal() {
@@ -12,6 +12,7 @@ export default function EditVehicleModal() {
     editingVehicle,
     closeEditVehicleModal,
     updateVehicle,
+    deleteVehicle,
     uploadVehicleImage,
     deleteVehicleImage,
   } = useFleet();
@@ -657,7 +658,26 @@ export default function EditVehicleModal() {
           </div>
 
           {/* Footer */}
-          <div className="self-stretch pt-2 border-t border-color-border-subtle inline-flex justify-start items-start gap-3">
+          <div className="self-stretch pt-2 border-t border-color-border-subtle inline-flex justify-start items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (
+                  editingVehicle &&
+                  window.confirm(
+                    `Are you sure you want to delete "${editingVehicle.name}"? This vehicle will be removed from your fleet.`
+                  )
+                ) {
+                  deleteVehicle(editingVehicle.id);
+                  closeEditVehicleModal();
+                }
+              }}
+              title="Delete this vehicle"
+              className="h-11 px-3.5 rounded-lg outline outline-1 outline-offset-[-1px] outline-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-1.5 text-xs font-semibold font-['Manrope'] transition-colors cursor-pointer"
+            >
+              <Trash2 className="size-4" />
+              <span>Delete</span>
+            </button>
             <button
               type="button"
               onClick={closeEditVehicleModal}
