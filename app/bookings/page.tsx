@@ -41,6 +41,7 @@ export default function BookingsPage() {
           </div>
 
           <button
+            data-tour="bookings-new-btn"
             type="button"
             onClick={openNewBookingModal}
             className="px-4 py-2.5 bg-color-background-accent rounded-lg flex justify-start items-center gap-2 hover:brightness-105 transition-all cursor-pointer shadow-xs"
@@ -53,10 +54,12 @@ export default function BookingsPage() {
         </div>
 
         {/* Filter Tabs & Search Bar */}
-        <BookingsFilterTabs />
+        <div data-tour="bookings-tabs" className="self-stretch w-full">
+          <BookingsFilterTabs />
+        </div>
 
         {/* Bookings Table (Full Width) */}
-        <div className="self-stretch w-full min-w-0">
+        <div data-tour="bookings-table" className="self-stretch w-full min-w-0">
           <BookingsTable />
         </div>
 

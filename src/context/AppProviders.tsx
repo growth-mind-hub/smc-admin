@@ -5,6 +5,7 @@ import { AuthProvider } from "./AuthContext";
 import { BookingProvider } from "./BookingContext";
 import { FleetProvider } from "./FleetContext";
 import { PricingProvider } from "./PricingContext";
+import { GuideProvider } from "./GuideContext";
 
 export default function AppProviders({
   children,
@@ -15,7 +16,9 @@ export default function AppProviders({
     <AuthProvider>
       <BookingProvider>
         <FleetProvider>
-          <PricingProvider>{children}</PricingProvider>
+          <PricingProvider>
+            <GuideProvider>{children}</GuideProvider>
+          </PricingProvider>
         </FleetProvider>
       </BookingProvider>
     </AuthProvider>

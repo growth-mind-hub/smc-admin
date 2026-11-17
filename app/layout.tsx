@@ -4,6 +4,9 @@ import "./globals.css";
 import AppProviders from "@/context/AppProviders";
 import AddVehicleModal from "@/Components/Fleet/AddVehicleModal";
 import EditVehicleModal from "@/Components/Fleet/EditVehicleModal";
+import InteractiveTour from "@/Components/Guide/InteractiveTour";
+import GuideModal from "@/Components/Guide/GuideModal";
+import FloatingGuideButton from "@/Components/Guide/FloatingGuideButton";
 
 export const metadata: Metadata = {
   title: "Singapore Maxicabs | Admin Portal",
@@ -41,6 +44,9 @@ export default function RootLayout({
           {children}
           <AddVehicleModal />
           <EditVehicleModal />
+          <InteractiveTour />
+          <GuideModal />
+          <FloatingGuideButton />
         </AppProviders>
       </body>
     </html>

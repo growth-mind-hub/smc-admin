@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useGuide } from "@/context/GuideContext";
 import {
   LayoutGrid,
   CalendarDays,
@@ -12,6 +13,8 @@ import {
   DollarSign,
   LogOut,
   X,
+  Sparkles,
+  BookOpen,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -22,6 +25,7 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { startTour, openGuideModal } = useGuide();
 
   const isDashboard = pathname === "/" || pathname === "/dashboard";
   const isBookings = pathname.startsWith("/bookings");
@@ -143,6 +147,47 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
                 </Link>
               );
             })}
+
+            {/* Assistance / Tour section */}
+            <div className="w-52 h-6 px-3 pt-4 pb-1 flex flex-col justify-start items-start">
+              <div className="justify-start text-white/30 text-[10px] font-semibold font-['Manrope'] uppercase leading-4 tracking-wider">
+                Assistance
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+                startTour({ pageSpecific: true });
+              }}
+              className="w-full px-3 py-2.5 rounded-lg inline-flex justify-between items-center text-white/80 hover:bg-white/10 hover:text-white transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles className="size-4.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">Quick Page Tour</span>
+              </div>
+              <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[10px] font-bold rounded">
+                Tour
+              </span>
+            </button>
+
+            <Link
+              href="/guide"
+              onClick={onCloseMobile}
+              className={`w-full px-3 py-2.5 rounded-lg inline-flex items-center gap-3 transition-colors ${
+                pathname === "/guide"
+                  ? "bg-color-background-accent text-color-text-primary font-semibold"
+                  : "text-white/70 hover:bg-white/5 hover:text-white font-medium"
+              }`}
+            >
+              <BookOpen
+                className={`size-4.5 ${
+                  pathname === "/guide" ? "text-slate-900" : "text-white/60"
+                }`}
+              />
+              <span className="text-sm">Operations Guide</span>
+            </Link>
           </div>
         </div>
 
