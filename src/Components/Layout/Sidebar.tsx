@@ -77,31 +77,46 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
       >
         <div className="self-stretch flex-1 flex flex-col justify-start items-start">
           {/* Logo / Header */}
-          <div className="self-stretch px-5 py-4 border-b border-white/10 flex justify-between items-center">
-            <Link
-              href="/"
-              className="flex-1 flex items-center justify-start group"
-              title="Singapore Maxicabs Dashboard"
-            >
-              <Image
-                src="/logo.png"
-                alt="Singapore Maxicabs"
-                width={600}
-                height={206}
-                className="w-full max-w-[185px] h-auto max-h-12 object-contain object-left group-hover:opacity-90 transition-opacity"
-                priority
-              />
-            </Link>
+          <div className="self-stretch p-3 border-b border-white/10 flex flex-col justify-start items-start gap-2">
+            <div className="w-full flex justify-between items-center">
+              <Link
+                href="/"
+                className="flex-1 flex flex-col items-start group"
+                title="Singapore Maxicabs Dashboard"
+              >
+                <div className="w-full bg-white/5 group-hover:bg-white/10 border border-white/10 group-hover:border-amber-400/30 rounded-xl p-3 flex flex-col items-start gap-2.5 transition-all shadow-2xs">
+                  <div className="w-full flex items-center justify-start">
+                    <Image
+                      src="/logo.png"
+                      alt="Singapore Maxicabs"
+                      width={600}
+                      height={206}
+                      className="w-full max-w-[190px] h-auto max-h-12 object-contain object-left group-hover:scale-[1.02] transition-transform"
+                      priority
+                    />
+                  </div>
+                  <div className="w-full flex items-center justify-between pt-1.5 border-t border-white/10">
+                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-bold tracking-widest uppercase text-amber-400 font-['Manrope']">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Admin Portal
+                    </span>
+                    <span className="text-[9.5px] text-white/40 font-medium font-['Manrope'] tracking-wider uppercase">
+                      Operations
+                    </span>
+                  </div>
+                </div>
+              </Link>
 
-            {/* Mobile close button */}
-            <button
-              type="button"
-              onClick={onCloseMobile}
-              className="lg:hidden text-white/60 hover:text-white p-1 ml-2 flex-shrink-0 cursor-pointer"
-              aria-label="Close sidebar"
-            >
-              <X className="w-4 h-4" />
-            </button>
+              {/* Mobile close button */}
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="lg:hidden text-white/60 hover:text-white p-1 ml-1 flex-shrink-0 cursor-pointer self-start mt-1"
+                aria-label="Close sidebar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Nav Items */}
@@ -187,7 +202,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
         </div>
 
         {/* Bottom Actions */}
-        <div className="self-stretch px-3 py-4 border-t border-white/10 flex flex-col justify-start items-start gap-1">
+        <div className="self-stretch px-3 pt-3 pb-8 sm:pb-6 border-t border-white/10 flex flex-col justify-start items-start gap-1">
           <button
             type="button"
             onClick={logout}
