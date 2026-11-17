@@ -17,6 +17,15 @@ import {
   Compass,
 } from "lucide-react";
 
+interface PositionState {
+  isAttached: boolean;
+  placement: "bottom" | "top" | "center";
+  top?: number;
+  bottom?: number;
+  left?: number;
+  arrowLeft?: number;
+}
+
 export default function InteractiveTour() {
   const {
     isTourOpen,
@@ -33,37 +42,123 @@ export default function InteractiveTour() {
   } = useGuide();
 
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [pos, setPos] = useState<PositionState>({
+    isAttached: false,
+    placement: "center",
+  });
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Position and highlight target element
   useEffect(() => {
     if (!isTourOpen || !currentStepData) {
       setTargetRect(null);
+      setPos({ isAttached: false, placement: "center" });
       return;
     }
 
-    const updatePosition = () => {
-      if (currentStepData.targetSelector) {
-        const el = document.querySelector(currentStepData.targetSelector);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          const rect = el.getBoundingClientRect();
-          setTargetRect(rect);
-          return;
-        }
-      }
-      setTargetRect(null);
+    const getTargetEl = () => {
+      if (!currentStepData.targetSelector) return null;
+      return document.querySelector(currentStepData.targetSelector);
     };
 
-    // Small delay to allow any page transitions/rendering
-    const timer = setTimeout(updatePosition, 150);
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition);
+    const updateCoordinates = () => {
+      const el = getTargetEl();
+      if (!el) {
+        setTargetRect(null);
+        setPos({ isAttached: false, placement: "center" });
+        return;
+      }
+
+      const rect = el.getBoundingClientRect();
+      setTargetRect(rect);
+
+      if (typeof window === "undefined") return;
+
+      const winH = window.innerHeight;
+      const winW = window.innerWidth;
+      const cardH = cardRef.current?.offsetHeight || 370;
+      const cardW = Math.min(480, winW - 32);
+
+      const spaceBelow = winH - rect.bottom;
+      const spaceAbove = rect.top;
+
+      let placement: "bottom" | "top" | "center" = "bottom";
+      let top: number | undefined;
+      let bottom: number | undefined;
+
+      // Smart placement: prioritize placing card where there is ample unobstructed room
+      if (spaceBelow >= cardH + 20) {
+        placement = "bottom";
+        top = Math.max(16, rect.bottom + 14);
+      } else if (spaceAbove >= cardH + 20) {
+        placement = "top";
+        bottom = Math.max(16, winH - rect.top + 14);
+      } else if (spaceBelow >= spaceAbove) {
+        placement = "bottom";
+        top = Math.max(16, rect.bottom + 10);
+      } else {
+        placement = "top";
+        bottom = Math.max(16, winH - rect.top + 10);
+      }
+
+      // Horizontal alignment: align with target element left edge, clamped to viewport margins
+      let left: number;
+      if (winW < 640) {
+        left = 16;
+      } else {
+        const idealLeft = rect.left;
+        const maxLeft = winW - cardW - 24;
+        const minLeft = 24;
+        left = Math.max(minLeft, Math.min(maxLeft, idealLeft));
+      }
+
+      // Arrow position pointing at target center
+      const targetCenter = rect.left + rect.width / 2;
+      const arrowLeft = Math.max(28, Math.min(cardW - 28, targetCenter - left));
+
+      setPos({
+        isAttached: true,
+        placement,
+        top,
+        bottom,
+        left,
+        arrowLeft,
+      });
+    };
+
+    // 1. One-time smooth scroll when step changes to position target cleanly in upper viewport
+    const el = getTargetEl();
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const cardH = 370;
+      const spaceNeeded = rect.height + cardH + 40;
+      const elPageTop = rect.top + window.scrollY;
+
+      if (rect.top < 70 || rect.bottom > window.innerHeight - 80) {
+        if (spaceNeeded <= window.innerHeight - 70) {
+          window.scrollTo({
+            top: Math.max(0, elPageTop - 80),
+            behavior: "smooth",
+          });
+        } else {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
+
+    // 2. Initial calculation with small delay for DOM layout / smooth scroll
+    const timer1 = setTimeout(updateCoordinates, 80);
+    const timer2 = setTimeout(updateCoordinates, 360);
+
+    // 3. Keep coordinates synced on scroll or resize without triggering new scrolls
+    window.addEventListener("resize", updateCoordinates);
+    window.addEventListener("scroll", updateCoordinates);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      window.removeEventListener("resize", updateCoordinates);
+      window.removeEventListener("scroll", updateCoordinates);
     };
   }, [isTourOpen, currentStepData, currentTourStep]);
 
@@ -102,29 +197,57 @@ export default function InteractiveTour() {
           }}
           className="fixed pointer-events-none z-50 rounded-2xl ring-4 ring-amber-400 ring-offset-4 ring-offset-white/80 shadow-[0_0_0_9999px_rgba(7,30,59,0.55)] transition-all duration-300 ease-out"
         >
-          <div className="absolute -top-3.5 left-4 px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse">
+          <div className="absolute -top-3.5 left-4 px-2.5 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse">
             <Sparkles className="size-3" />
             <span>Spotlight</span>
           </div>
         </div>
       )}
 
-      {/* Backdrop (if target not found or covering whole screen) */}
-      {!targetRect && (
-        <div
-          onClick={closeTour}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
-        />
-      )}
+      {/* Backdrop: click anywhere outside to dismiss */}
+      <div
+        onClick={closeTour}
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-2xs transition-opacity duration-200 cursor-default"
+        title="Click outside to exit tour"
+      />
 
-      {/* Floating Tour Card */}
-      <div className="fixed inset-0 pointer-events-none z-50 flex items-end sm:items-center justify-center p-3 sm:p-5 font-['Manrope']">
+      {/* Floating Tour Card positioned near target element or centered if modal */}
+      <div
+        className={
+          pos.isAttached
+            ? "fixed z-50 pointer-events-none font-['Manrope'] transition-all duration-300 ease-out"
+            : "fixed inset-0 z-50 pointer-events-none flex items-center justify-center p-3 sm:p-5 font-['Manrope']"
+        }
+        style={
+          pos.isAttached
+            ? {
+                top: pos.top !== undefined ? `${pos.top}px` : undefined,
+                bottom: pos.bottom !== undefined ? `${pos.bottom}px` : undefined,
+                left: pos.left !== undefined ? `${pos.left}px` : undefined,
+                width: "min(480px, calc(100vw - 32px))",
+              }
+            : undefined
+        }
+      >
         <div
           ref={cardRef}
-          className="pointer-events-auto w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 mb-2 sm:mb-0"
+          className="relative pointer-events-auto w-full bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
         >
+          {/* Directional pointer arrow pointing to the spotlighted element */}
+          {pos.isAttached && pos.placement === "bottom" && (
+            <div
+              style={{ left: pos.arrowLeft ? `${pos.arrowLeft}px` : "32px" }}
+              className="absolute -top-1.5 size-3.5 bg-stone-50 border-t border-l border-stone-200 rotate-45 z-20 -translate-x-1/2 shadow-2xs"
+            />
+          )}
+          {pos.isAttached && pos.placement === "top" && (
+            <div
+              style={{ left: pos.arrowLeft ? `${pos.arrowLeft}px` : "32px" }}
+              className="absolute -bottom-1.5 size-3.5 bg-stone-50 border-b border-r border-stone-200 rotate-45 z-20 -translate-x-1/2 shadow-2xs"
+            />
+          )}
           {/* Top Progress Bar */}
           <div className="w-full h-1.5 bg-stone-100 overflow-hidden">
             <div
