@@ -78,32 +78,27 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
         <div className="self-stretch flex-1 flex flex-col justify-start items-start">
           {/* Logo / Header */}
           <div className="self-stretch px-5 py-4 border-b border-white/10 flex justify-between items-center">
-            <Link href="/" className="inline-flex justify-start items-center gap-3 group">
-              <div className="size-9 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center flex-shrink-0 p-1 group-hover:border-amber-400/40 transition-colors shadow-xs">
-                <Image
-                  src="/app-icon.png"
-                  alt="Singapore Maxicabs"
-                  width={36}
-                  height={36}
-                  className="size-full object-contain"
-                  priority
-                />
-              </div>
-              <div className="inline-flex flex-col justify-start items-start">
-                <div className="text-color-text-inverse text-xs font-bold font-['Manrope'] leading-3.5 group-hover:text-amber-400 transition-colors">
-                  Singapore Maxicabs
-                </div>
-                <div className="text-orange-400 text-[10px] font-semibold font-['Manrope'] uppercase leading-4 tracking-wider">
-                  Admin Portal
-                </div>
-              </div>
+            <Link
+              href="/"
+              className="flex-1 flex items-center justify-start group"
+              title="Singapore Maxicabs Dashboard"
+            >
+              <Image
+                src="/logo.png"
+                alt="Singapore Maxicabs"
+                width={600}
+                height={206}
+                className="w-full max-w-[185px] h-auto max-h-12 object-contain object-left group-hover:opacity-90 transition-opacity"
+                priority
+              />
             </Link>
 
             {/* Mobile close button */}
             <button
               type="button"
               onClick={onCloseMobile}
-              className="lg:hidden text-white/60 hover:text-white p-1"
+              className="lg:hidden text-white/60 hover:text-white p-1 ml-2 flex-shrink-0 cursor-pointer"
+              aria-label="Close sidebar"
             >
               <X className="w-4 h-4" />
             </button>
