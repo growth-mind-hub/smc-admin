@@ -435,6 +435,7 @@ export default function NewBookingModal() {
       setIsSubmitting(true);
       const res = await createManualBooking(payload, {
         vehicleName: currentVehicle?.name || `Vehicle #${vehicleApiId}`,
+        fleetNumber: currentVehicle?.fleetNumber,
         pickupDate,
         pickupTime,
         serviceName: currentService.name,

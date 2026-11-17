@@ -32,6 +32,7 @@ export interface Booking {
   serviceType: ServiceType;
   vehicleType: VehicleCategory;
   vehicleName: string;
+  fleetNumber?: string;
   pickupLocation: string;
   dropoffLocation: string;
   pickupDate: string; // YYYY-MM-DD

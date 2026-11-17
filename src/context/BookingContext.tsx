@@ -37,6 +37,7 @@ interface BookingContextType {
     payload: AdminManualBookingPayload,
     extraMeta?: {
       vehicleName?: string;
+      fleetNumber?: string;
       pickupDate?: string;
       pickupTime?: string;
       serviceName?: string;
@@ -148,6 +149,11 @@ function mapBackendBookingToFrontend(
     serviceType,
     vehicleType: category,
     vehicleName,
+    fleetNumber:
+      b.fleet_number ||
+      b.vehicle?.fleet_number ||
+      b.quote_snapshot?.vehicle?.fleet_number ||
+      undefined,
     pickupLocation: b.pickup_address || "Singapore",
     dropoffLocation: b.drop_address || "Singapore",
     pickupDate: pDate,
@@ -366,6 +372,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     payload: AdminManualBookingPayload,
     extraMeta?: {
       vehicleName?: string;
+      fleetNumber?: string;
       pickupDate?: string;
       pickupTime?: string;
       serviceName?: string;
@@ -381,6 +388,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
           bookings.length
         );
         if (extraMeta?.vehicleName) newBooking.vehicleName = extraMeta.vehicleName;
+        if (extraMeta?.fleetNumber) newBooking.fleetNumber = extraMeta.fleetNumber;
         if (extraMeta?.pickupDate) newBooking.pickupDate = extraMeta.pickupDate;
         if (extraMeta?.pickupTime) newBooking.pickupTime = extraMeta.pickupTime;
 

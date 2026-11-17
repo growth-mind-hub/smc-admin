@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useMemo } from "react";
 import { useBookings } from "@/context/BookingContext";
+import { useFleet } from "@/context/FleetContext";
 import { BookingStatus, BookingChannel } from "@/types/booking";
 import {
   X,
@@ -34,6 +35,7 @@ export default function BookingDetailsModal() {
     deleteBooking,
     assignDriver,
   } = useBookings();
+  const { vehicles } = useFleet();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isEditingDriver, setIsEditingDriver] = React.useState(false);
   const [inputDriverName, setInputDriverName] = React.useState("");
@@ -218,10 +220,35 @@ export default function BookingDetailsModal() {
     activeBooking.assignedDriver?.phone ||
     activeBooking.driverAssigned?.phone ||
     "";
-  const vehiclePlate =
-    activeBooking.assignedDriver?.vehiclePlate ||
-    activeBooking.driverAssigned?.vehiclePlate ||
-    (activeBooking.vehicleName ? activeBooking.vehicleName.slice(0, 7).toUpperCase() : "SMC");
+
+  // Match vehicle from fleet to find accurate fleet number (e.g. SMC-001, SMC-002, etc.)
+  const matchingVehicle = useMemo(() => {
+    if (!vehicles || vehicles.length === 0 || !activeBooking) return null;
+    const vName = (activeBooking.vehicleName || "").toLowerCase().trim();
+    return (
+      vehicles.find(
+        (v) =>
+          (vName && v.name.toLowerCase().trim() === vName) ||
+          (vName && v.model && v.model.toLowerCase().includes(vName)) ||
+          (vName && v.name.toLowerCase().includes(vName))
+      ) ||
+      vehicles.find((v) => v.category === activeBooking.vehicleType) ||
+      null
+    );
+  }, [vehicles, activeBooking?.vehicleName, activeBooking?.vehicleType]);
+
+  const fleetNumber =
+    activeBooking.fleetNumber ||
+    matchingVehicle?.fleetNumber ||
+    (activeBooking.assignedDriver?.vehiclePlate?.startsWith("SMC-")
+      ? activeBooking.assignedDriver.vehiclePlate
+      : null) ||
+    (activeBooking.driverAssigned?.vehiclePlate?.startsWith("SMC-")
+      ? activeBooking.driverAssigned.vehiclePlate
+      : null) ||
+    "SMC-001";
+
+  const vehiclePlate = fleetNumber;
 
   const driverInitials = hasDriverAssigned
     ? driverName
@@ -565,8 +592,8 @@ export default function BookingDetailsModal() {
               <div className="rounded-xl border border-color-border-subtle overflow-hidden flex flex-col">
                 <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-4 text-white flex justify-between items-center">
                   <div>
-                    <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 text-[10px] font-bold rounded">
-                      {vehiclePlate}
+                    <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 text-[10px] font-bold rounded tracking-wide font-mono">
+                      {fleetNumber}
                     </span>
                     <h3 className="text-sm font-bold mt-1 text-white">
                       {activeBooking.vehicleName || "Maxi Cab"}
