@@ -65,6 +65,23 @@ export default function BookingDetailsModal() {
     }
   }, [activeBooking, handleKeyDown]);
 
+
+  // Match vehicle from fleet to find accurate fleet number (e.g. SMC-001, SMC-002, etc.)
+  const matchingVehicle = useMemo(() => {
+    if (!vehicles || vehicles.length === 0 || !activeBooking) return null;
+    const vName = (activeBooking.vehicleName || "").toLowerCase().trim();
+    return (
+      vehicles.find(
+        (v) =>
+          (vName && v.name.toLowerCase().trim() === vName) ||
+          (vName && v.model && v.model.toLowerCase().includes(vName)) ||
+          (vName && v.name.toLowerCase().includes(vName))
+      ) ||
+      vehicles.find((v) => v.category === activeBooking.vehicleType) ||
+      null
+    );
+  }, [vehicles, activeBooking?.vehicleName, activeBooking?.vehicleType]);
+
   if (!activeBooking) return null;
 
   const handleDeleteBooking = async () => {
@@ -221,21 +238,6 @@ export default function BookingDetailsModal() {
     activeBooking.driverAssigned?.phone ||
     "";
 
-  // Match vehicle from fleet to find accurate fleet number (e.g. SMC-001, SMC-002, etc.)
-  const matchingVehicle = useMemo(() => {
-    if (!vehicles || vehicles.length === 0 || !activeBooking) return null;
-    const vName = (activeBooking.vehicleName || "").toLowerCase().trim();
-    return (
-      vehicles.find(
-        (v) =>
-          (vName && v.name.toLowerCase().trim() === vName) ||
-          (vName && v.model && v.model.toLowerCase().includes(vName)) ||
-          (vName && v.name.toLowerCase().includes(vName))
-      ) ||
-      vehicles.find((v) => v.category === activeBooking.vehicleType) ||
-      null
-    );
-  }, [vehicles, activeBooking?.vehicleName, activeBooking?.vehicleType]);
 
   const fleetNumber =
     activeBooking.fleetNumber ||
