@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: "Singapore Maxicabs | Admin Portal",
   description:
     "Management and operations portal for Singapore Maxicabs - Bookings, Fleets, Drivers, Pricing, and Analytics.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/app-icon.png", type: "image/png" },
+    ],
+    shortcut: "/app-icon.png",
+    apple: "/app-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

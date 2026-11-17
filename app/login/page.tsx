@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Car } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -30,15 +31,22 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="self-stretch flex flex-col justify-start items-start">
           <div className="self-stretch inline-flex justify-start items-center gap-3">
-            <div className="size-10 bg-color-background-accent rounded-xl flex justify-center items-center flex-shrink-0">
-              <Car className="size-5 text-slate-900" />
+            <div className="size-12 bg-white/5 border border-white/10 rounded-xl flex justify-center items-center flex-shrink-0 p-1.5 shadow-md">
+              <Image
+                src="/app-icon.png"
+                alt="Singapore Maxicabs"
+                width={48}
+                height={48}
+                className="size-full object-contain"
+                priority
+              />
             </div>
             <div className="inline-flex flex-col justify-start items-start">
-              <div className="justify-start text-color-text-inverse text-sm font-bold font-['Manrope'] leading-4">
+              <div className="justify-start text-color-text-inverse text-base font-bold font-['Manrope'] leading-5">
                 Singapore Maxicabs
               </div>
-              <div className="pt-0.5 justify-start text-orange-400 text-[10px] font-normal font-['Manrope'] uppercase leading-4 tracking-widest">
-                Premium Transport
+              <div className="pt-0.5 justify-start text-orange-400 text-[10px] font-semibold font-['Manrope'] uppercase leading-4 tracking-widest">
+                Admin &amp; Operations
               </div>
             </div>
           </div>
@@ -121,6 +129,16 @@ export default function LoginPage() {
         <div className="w-full max-w-96 flex flex-col justify-start items-start">
           {/* Header */}
           <div className="self-stretch flex flex-col justify-start items-start">
+            <div className="lg:hidden mb-4 size-12 bg-white/5 border border-slate-300 rounded-xl flex justify-center items-center p-1.5 shadow-xs">
+              <Image
+                src="/app-icon.png"
+                alt="Singapore Maxicabs"
+                width={44}
+                height={44}
+                className="size-full object-contain"
+                priority
+              />
+            </div>
             <h2 className="justify-start text-color-text-primary text-3xl font-bold font-['Manrope'] leading-10">
               Welcome back
             </h2>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -72,21 +73,24 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarPr
       >
         <div className="self-stretch flex-1 flex flex-col justify-start items-start">
           {/* Logo / Header */}
-          <div className="self-stretch px-6 py-5 border-b border-white/10 flex justify-between items-center">
-            <Link href="/" className="inline-flex justify-start items-center gap-2.5">
-              <div className="size-8 bg-color-background-accent rounded-md flex justify-center items-center flex-shrink-0">
-                <Car className="size-4 text-slate-900" />
+          <div className="self-stretch px-5 py-4 border-b border-white/10 flex justify-between items-center">
+            <Link href="/" className="inline-flex justify-start items-center gap-3 group">
+              <div className="size-9 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center flex-shrink-0 p-1 group-hover:border-amber-400/40 transition-colors shadow-xs">
+                <Image
+                  src="/app-icon.png"
+                  alt="Singapore Maxicabs"
+                  width={36}
+                  height={36}
+                  className="size-full object-contain"
+                  priority
+                />
               </div>
-              <div className="w-14 inline-flex flex-col justify-start items-start">
-                <div className="self-stretch flex flex-col justify-start items-start">
-                  <div className="justify-start text-color-text-inverse text-xs font-bold font-['Manrope'] leading-3">
-                    Maxicabs
-                  </div>
+              <div className="inline-flex flex-col justify-start items-start">
+                <div className="text-color-text-inverse text-xs font-bold font-['Manrope'] leading-3.5 group-hover:text-amber-400 transition-colors">
+                  Singapore Maxicabs
                 </div>
-                <div className="self-stretch flex flex-col justify-start items-start">
-                  <div className="justify-start text-orange-400 text-[10px] font-normal font-['Manrope'] uppercase leading-4 tracking-wide">
-                    Admin
-                  </div>
+                <div className="text-orange-400 text-[10px] font-semibold font-['Manrope'] uppercase leading-4 tracking-wider">
+                  Admin Portal
                 </div>
               </div>
             </Link>

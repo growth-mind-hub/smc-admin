@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -49,7 +50,15 @@ export default function TopNav({ onOpenMobileMenu }: TopNavProps) {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="inline-flex flex-col justify-start items-start">
+        <div className="inline-flex items-center gap-2">
+          <Image
+            src="/app-icon.png"
+            alt="Singapore Maxicabs"
+            width={22}
+            height={22}
+            className="size-5.5 object-contain rounded-md"
+            priority
+          />
           <div className="justify-start text-color-input-placeholder text-xs font-normal font-['Manrope'] leading-5">
             Singapore Maxicabs
           </div>
