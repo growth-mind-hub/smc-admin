@@ -277,8 +277,6 @@ export interface ApiBackendBooking {
   customer_email: string;
   customer_phone: string;
   vehicle_id: number;
-  fleet_number?: string | null;
-  vehicle?: { fleet_number?: string | null } | null;
   service_id: number;
   catalog_id?: number;
   pickup_address: string;
@@ -294,6 +292,13 @@ export interface ApiBackendBooking {
   payment_method?: string;
   status?: string;
   booking_status?: string;
+  fleet_number?: string;
+  vehicle?: {
+    id?: number;
+    name?: string;
+    fleet_number?: string;
+    [key: string]: any;
+  };
   driver_name?: string | null;
   driver_phone?: string | null;
   created_at: string;
