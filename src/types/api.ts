@@ -277,6 +277,8 @@ export interface ApiBackendBooking {
   customer_email: string;
   customer_phone: string;
   vehicle_id: number;
+  fleet_number?: string | null;
+  vehicle?: { fleet_number?: string | null } | null;
   service_id: number;
   catalog_id?: number;
   pickup_address: string;
