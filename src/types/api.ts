@@ -33,6 +33,7 @@ export interface VehiclePrices {
 export interface ApiVehicle {
   id: number;
   name: string;
+  slug?: string | null;
   description?: string | null;
   passengerCapacity: number | null;
   luggageCapacity: number | null;
@@ -375,6 +376,7 @@ export interface VehicleImageResponse {
 
 export interface AdminCreateVehiclePayload {
   name: string;
+  slug?: string;
   description?: string;
   passengerCapacity?: number | null;
   luggageCapacity?: number | null;
@@ -393,6 +395,7 @@ export interface AdminCreateVehiclePayload {
 
 export interface AdminUpdateVehiclePayload {
   name?: string;
+  slug?: string;
   description?: string;
   passengerCapacity?: number | null;
   luggageCapacity?: number | null;

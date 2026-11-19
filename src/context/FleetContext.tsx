@@ -15,6 +15,7 @@ import {
 import { invalidateApiCache } from "@/lib/api/client";
 import { ApiVehicle } from "@/types/api";
 import { API_CONFIG } from "@/config/api";
+import { slugify } from "@/lib/slug";
 
 interface FleetContextType {
   vehicles: Vehicle[];
@@ -83,11 +84,26 @@ function mapApiToVehicle(v: ApiVehicle, index: number): Vehicle {
     v.prices?.hourly?.amount ??
     60;
 
+  let savedSlugs: Record<string, string> = {};
+  try {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("smc_fleet_slugs");
+      if (stored) savedSlugs = JSON.parse(stored);
+    }
+  } catch {}
+
+  const slug =
+    v.slug ||
+    savedSlugs[String(v.id)] ||
+    savedSlugs[`api_${v.id}`] ||
+    slugify(v.name);
+
   return {
     id: String(v.id),
     apiId: v.id,
     fleetNumber: `SMC-${String(index + 1).padStart(3, "0")}`,
     name: v.name,
+    slug,
     model: v.description || v.vehicleType || "Maxi Cab",
     description: v.description || "",
     category: inferCategory(v.name, v.passengerCapacity),
@@ -217,11 +233,13 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
       const baseFare = data.baseRate || 65;
       const hourly = data.hourlyRate || 60;
       const arrivalRate = data.arrivalDriveway || data.meetAndGreet || baseFare + 10;
+      const targetSlug = data.slug?.trim() || slugify(data.name || "vehicle");
 
       // Try creating via API
       try {
         const created = await apiCreateVehicle({
           name: data.name || "New Vehicle",
+          slug: targetSlug,
           description: data.description !== undefined ? data.description : (data.model || "Executive MPV"),
           passengerCapacity: data.paxCapacity || 6,
           luggageCapacity: data.luggageCapacity || 4,
@@ -237,6 +255,15 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (created?.vehicle) {
+          try {
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("smc_fleet_slugs");
+              const map = stored ? JSON.parse(stored) : {};
+              map[String(created.vehicle.id)] = targetSlug;
+              localStorage.setItem("smc_fleet_slugs", JSON.stringify(map));
+            }
+          } catch {}
+
           if ((data as any).imageFile) {
             try {
               await apiUploadVehicleImage(created.vehicle.id, (data as any).imageFile);
@@ -257,6 +284,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         id: `v-${Date.now()}`,
         fleetNumber: data.fleetNumber || `SMC-00${vehicles.length + 1}`,
         name: data.name || "New Vehicle",
+        slug: targetSlug,
         model: data.model || "Toyota Alphard",
         description: data.description || "",
         category: data.category || "6_seater",
@@ -281,11 +309,24 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
     const target = vehicles.find((v) => v.id === id);
     const numId = target?.apiId || (!isNaN(Number(id)) ? Number(id) : null);
 
+    if (updates.slug) {
+      try {
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("smc_fleet_slugs");
+          const map = stored ? JSON.parse(stored) : {};
+          if (numId) map[String(numId)] = updates.slug;
+          map[id] = updates.slug;
+          localStorage.setItem("smc_fleet_slugs", JSON.stringify(map));
+        }
+      } catch {}
+    }
+
     if (numId) {
       try {
         // 1. Update vehicle metadata
         await apiUpdateVehicle(numId, {
           name: updates.name,
+          slug: updates.slug,
           description: updates.description !== undefined ? updates.description : updates.model,
           passengerCapacity: updates.paxCapacity,
           luggageCapacity: updates.luggageCapacity,

@@ -3,8 +3,9 @@
 import React from "react";
 import { Vehicle } from "@/types/fleet";
 import { useFleet } from "@/context/FleetContext";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Globe } from "lucide-react";
 import { WhatsAppIcon } from "@/Shared/Icons";
+import { slugify } from "@/lib/slug";
 
 interface FleetCardProps {
   vehicle: Vehicle;
@@ -114,6 +115,17 @@ export default function FleetCard({ vehicle }: FleetCardProps) {
               </p>
             </div>
           )}
+        </div>
+
+        {/* SEO Landing Page URL */}
+        <div className="self-stretch flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-amber-50/60 rounded-lg border border-amber-200/50 text-[11px] font-mono text-amber-900 shadow-xs">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Globe className="size-3 text-amber-600 flex-shrink-0" />
+            <span className="text-amber-800/70 font-sans text-[10px] uppercase font-bold tracking-wider">SEO:</span>
+            <span className="font-semibold text-amber-950 truncate">
+              /fleets/{vehicle.slug || slugify(vehicle.name)}
+            </span>
+          </div>
         </div>
 
         {/* Assigned Driver Row */}

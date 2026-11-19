@@ -7,6 +7,7 @@ export interface Vehicle {
   apiId?: number;
   fleetNumber: string;
   name: string;
+  slug?: string;
   model: string;
   description?: string;
   category: "6_seater" | "7_seater" | "9_seater" | "13_seater" | "wheelchair" | "luxury_sedan";

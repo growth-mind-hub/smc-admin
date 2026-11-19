@@ -3,7 +3,8 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, Globe, Sparkles } from "lucide-react";
+import { slugify, sanitizeSlugInput, isValidSlug } from "@/lib/slug";
 
 export default function AddVehicleModal() {
   const { isAddVehicleModalOpen, closeAddVehicleModal, addVehicle, totalVehiclesCount } =
@@ -11,6 +12,8 @@ export default function AddVehicleModal() {
 
   const [fleetNumber, setFleetNumber] = useState("");
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [isSlugManual, setIsSlugManual] = useState(false);
   const [description, setDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -75,6 +78,8 @@ export default function AddVehicleModal() {
   const handleClose = useCallback(() => {
     setFleetNumber("");
     setName("");
+    setSlug("");
+    setIsSlugManual(false);
     setDescription("");
     setSelectedFile(null);
     setImagePreviewUrl(null);
@@ -102,6 +107,8 @@ export default function AddVehicleModal() {
     if (isAddVehicleModalOpen) {
       setFleetNumber("");
       setName("");
+      setSlug("");
+      setIsSlugManual(false);
       setDescription("");
       setSelectedFile(null);
       setImagePreviewUrl(null);
@@ -164,6 +171,14 @@ export default function AddVehicleModal() {
       errs.name = "Vehicle name must be at least 3 characters";
     }
 
+    // SEO URL Slug
+    const trimmedSlug = slug.trim();
+    if (!trimmedSlug) {
+      errs.slug = "SEO URL Slug is required (e.g. 6-seater-maxi-cab)";
+    } else if (!isValidSlug(trimmedSlug)) {
+      errs.slug = "Slug must contain only lowercase letters, numbers, and hyphens (e.g. 6-seater-maxi-cab)";
+    }
+
     // Vehicle Description (mandatory)
     const trimmedDesc = description.trim();
     if (!trimmedDesc) {
@@ -210,6 +225,7 @@ export default function AddVehicleModal() {
   }, [
     fleetNumber,
     name,
+    slug,
     description,
     selectedFile,
     imagePreviewUrl,
@@ -252,6 +268,7 @@ export default function AddVehicleModal() {
     const allTouched: Record<string, boolean> = {
       fleetNumber: true,
       name: true,
+      slug: true,
       description: true,
       photo: true,
       paxCapacity: true,
@@ -278,6 +295,7 @@ export default function AddVehicleModal() {
       await addVehicle({
         fleetNumber: fleetNumber.trim() || `SMC-00${totalVehiclesCount + 1}`,
         name: name.trim(),
+        slug: slug.trim() || slugify(name.trim()),
         model: name.trim() || "Vehicle",
         description: truncateToWordLimit(description.trim(), 300),
         category: "6_seater",
@@ -387,7 +405,11 @@ export default function AddVehicleModal() {
                   type="text"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
+                    const newName = e.target.value;
+                    setName(newName);
+                    if (!isSlugManual) {
+                      setSlug(slugify(newName));
+                    }
                     if (submitError) setSubmitError(null);
                   }}
                   onBlur={() => markTouched("name")}
@@ -402,6 +424,69 @@ export default function AddVehicleModal() {
                   <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
                     <AlertCircle className="size-3 flex-shrink-0" />
                     <span>{validationErrors.name}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* SEO URL Slug */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-1">
+                <div className="self-stretch flex justify-between items-center">
+                  <label className="text-color-input-placeholder text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
+                    <span>SEO URL Slug</span>
+                    <span className="text-red-500">*</span>
+                    <span className="text-[10px] lowercase text-slate-400 font-normal hidden sm:inline">(landing page url)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (name.trim()) {
+                        setSlug(slugify(name));
+                        setIsSlugManual(false);
+                        if (submitError) setSubmitError(null);
+                      }
+                    }}
+                    title="Auto-generate slug from vehicle name"
+                    className="text-[11px] text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-amber-50"
+                  >
+                    <Sparkles className="size-3 text-amber-600" />
+                    <span>Auto-generate</span>
+                  </button>
+                </div>
+
+                <div className="self-stretch relative flex items-center">
+                  <div className="absolute left-3 flex items-center pointer-events-none text-slate-400">
+                    <span className="text-xs font-mono text-slate-500 select-none font-medium">/fleets/</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(sanitizeSlugInput(e.target.value));
+                      setIsSlugManual(true);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    onBlur={() => markTouched("slug")}
+                    placeholder="6-seater-maxi-cab"
+                    className={`self-stretch w-full h-10 pl-16 pr-3 py-2.5 rounded-lg outline outline-1 outline-offset-[-1px] text-xs font-mono text-color-text-primary focus:outline-none transition-all ${
+                      touched.slug && validationErrors.slug
+                        ? "bg-red-50/50 outline-red-400 focus:ring-1 focus:ring-red-400"
+                        : "bg-stone-100 outline-color-border-subtle focus:ring-1 focus:ring-amber-500"
+                    }`}
+                  />
+                </div>
+
+                {/* Live SEO URL Preview Badge */}
+                <div className="self-stretch mt-0.5 px-2.5 py-1.5 bg-amber-50/90 border border-amber-200/70 rounded-lg flex items-center gap-1.5 text-[11px] text-amber-950 font-mono overflow-hidden shadow-xs">
+                  <Globe className="size-3.5 text-amber-600 flex-shrink-0" />
+                  <span className="text-amber-800/80 select-none truncate">
+                    singaporemaxicabs.com.sg/fleets/<strong className="text-amber-950 font-bold">{slug || "..."}</strong>
+                  </span>
+                </div>
+
+                {touched.slug && validationErrors.slug && (
+                  <p className="text-red-600 text-[11px] font-medium flex items-center gap-1 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="size-3 flex-shrink-0" />
+                    <span>{validationErrors.slug}</span>
                   </p>
                 )}
               </div>

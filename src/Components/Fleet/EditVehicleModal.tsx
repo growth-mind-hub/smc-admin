@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useFleet } from "@/context/FleetContext";
 import { VehicleStatus } from "@/types/fleet";
-import { X, AlertCircle, Trash2 } from "lucide-react";
+import { X, AlertCircle, Trash2, Globe, Sparkles } from "lucide-react";
+import { slugify, sanitizeSlugInput, isValidSlug } from "@/lib/slug";
 import NumericInput from "@/Components/Common/NumericInput";
 
 export default function EditVehicleModal() {
@@ -19,6 +20,8 @@ export default function EditVehicleModal() {
 
   const [fleetNumber, setFleetNumber] = useState("");
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [isSlugManual, setIsSlugManual] = useState(false);
   const [model, setModel] = useState("");
   const [description, setDescription] = useState("");
   const [imagePath, setImagePath] = useState("/assets/2edae.png");
@@ -45,6 +48,8 @@ export default function EditVehicleModal() {
     if (editingVehicle) {
       setFleetNumber(editingVehicle.fleetNumber || "SMC-001");
       setName(editingVehicle.name);
+      setSlug(editingVehicle.slug || slugify(editingVehicle.name));
+      setIsSlugManual(Boolean(editingVehicle.slug));
       setModel(editingVehicle.model);
       setDescription(editingVehicle.description || "");
       setImagePath(editingVehicle.imagePath || "/assets/2edae.png");
@@ -186,6 +191,15 @@ export default function EditVehicleModal() {
       setSubmitError("Vehicle name is required.");
       return;
     }
+    const trimmedSlug = slug.trim();
+    if (!trimmedSlug) {
+      setSubmitError("SEO URL Slug is required.");
+      return;
+    }
+    if (!isValidSlug(trimmedSlug)) {
+      setSubmitError("Slug must contain only lowercase letters, numbers, and hyphens (e.g. 6-seater-maxi-cab).");
+      return;
+    }
     if (!description.trim()) {
       setSubmitError("Vehicle description is required.");
       return;
@@ -229,6 +243,7 @@ export default function EditVehicleModal() {
       await updateVehicle(editingVehicle.id, {
         fleetNumber: fleetNumber.trim(),
         name: name.trim(),
+        slug: trimmedSlug,
         model: model.trim() || name.trim() || "Vehicle",
         description: truncateToWordLimit(description.trim(), 300),
         plateNumber: fleetNumber.trim(),
@@ -314,15 +329,74 @@ export default function EditVehicleModal() {
 
               <div className="self-stretch flex flex-col justify-start items-start gap-1">
                 <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide">
-                  Vehicle Name
+                  Vehicle Name <span className="text-red-500">*</span>
                 </div>
                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none"
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setName(newName);
+                    if (!isSlugManual) {
+                      setSlug(slugify(newName));
+                    }
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className="self-stretch h-10 px-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs text-color-text-primary font-normal font-['Manrope'] focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
+              </div>
+
+              {/* SEO URL Slug */}
+              <div className="self-stretch flex flex-col justify-start items-start gap-1">
+                <div className="self-stretch flex justify-between items-center">
+                  <div className="justify-start text-color-input-placeholder text-xs font-semibold font-['Manrope'] uppercase leading-4 tracking-wide flex items-center gap-1.5">
+                    <span>SEO URL Slug</span>
+                    <span className="text-red-500">*</span>
+                    <span className="text-[10px] lowercase text-slate-400 font-normal hidden sm:inline">(landing page url)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (name.trim()) {
+                        setSlug(slugify(name));
+                        setIsSlugManual(false);
+                        if (submitError) setSubmitError(null);
+                      }
+                    }}
+                    title="Auto-generate slug from vehicle name"
+                    className="text-[11px] text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-amber-50"
+                  >
+                    <Sparkles className="size-3 text-amber-600" />
+                    <span>Auto-generate</span>
+                  </button>
+                </div>
+
+                <div className="self-stretch relative flex items-center">
+                  <div className="absolute left-3 flex items-center pointer-events-none text-slate-400">
+                    <span className="text-xs font-mono text-slate-500 select-none font-medium">/fleets/</span>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(sanitizeSlugInput(e.target.value));
+                      setIsSlugManual(true);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    placeholder="6-seater-maxi-cab"
+                    className="self-stretch w-full h-10 pl-16 pr-3 py-2.5 bg-stone-100 rounded-lg outline outline-1 outline-offset-[-1px] outline-color-border-subtle text-xs font-mono text-color-text-primary font-normal focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                </div>
+
+                {/* Live SEO URL Preview Badge */}
+                <div className="self-stretch mt-0.5 px-2.5 py-1.5 bg-amber-50/90 border border-amber-200/70 rounded-lg flex items-center gap-1.5 text-[11px] text-amber-950 font-mono overflow-hidden shadow-xs">
+                  <Globe className="size-3.5 text-amber-600 flex-shrink-0" />
+                  <span className="text-amber-800/80 select-none truncate">
+                    singaporemaxicabs.com.sg/fleets/<strong className="text-amber-950 font-bold">{slug || "..."}</strong>
+                  </span>
+                </div>
               </div>
 
               {/* Description (max 300 words) */}
